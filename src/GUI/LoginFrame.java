@@ -13,11 +13,10 @@ import java.awt.*;
 
 public class LoginFrame extends JFrame {
 
-    // Tema: Unidad 1 - Arreglo de Objetos
+    // Tema: Unidad 1 - Arreglo de Objetos (Mantener por consistencia académica)
     private Usuario[] usuariosRegistrados = {
         new Usuario("admin", "1234", "Administrador"),
         new Usuario("secretaria", "1234", "Secretaría"),
-        // Mismo carnet debe existir en "Gestión de Estudiantes" para matricularlo.
         new Usuario("estudiante", "1234", "Estudiante", "2024001")
     };
 
@@ -29,7 +28,7 @@ public class LoginFrame extends JFrame {
         getContentPane().setBackground(new Color(220, 235, 255));
         setLayout(new BorderLayout());
 
-        // =============== Panel Título con imagen (si deseas agregar) ===============
+        // =============== Panel Título ===============
         JLabel lblTitulo = new JLabel("Inicio de Sesión", JLabel.CENTER);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
         lblTitulo.setForeground(new Color(0, 70, 140));
@@ -65,34 +64,38 @@ public class LoginFrame extends JFrame {
         // =============== Acción del botón login ===============
         btnLogin.addActionListener(e -> {
             String user = txtUsuario.getText().trim();
-            String pass = new String(txtPassword.getPassword());
+            String pass = new String(txtPassword.getPassword()).trim();
 
-            boolean accesoPermitido = false;
-            Usuario usuarioLogueado = null;
-
-            // Tema: Unidad 1 - Búsqueda en arreglo de objetos
-            for (Usuario u : usuariosRegistrados) {
-                if (u.getUsername().equals(user) && u.getPassword().equals(pass)) {
-                    accesoPermitido = true;
-                    usuarioLogueado = u;
-                    break;
-                }
+            if (user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Por favor, ingrese usuario y contraseña.");
+                return;
             }
 
-            // Estudiantes matriculados: usuario = carnet, contraseña 1234 (archivo cuentas_estudiantes.txt)
-            if (!accesoPermitido && CuentasEstudiantes.autenticar(user, pass)) {
+            // 1. Intentar validar como Administrador / Personal en la Base de Datos
+            dao.UsuarioDAO usuarioDAO = new dao.UsuarioDAO();
+            boolean accesoPermitido = usuarioDAO.validarUsuario(user, pass);
+            Usuario usuarioLogueado = null;
+
+            if (accesoPermitido) {
+                // Instanciamos el usuario con el rol correspondiente obtenido de la BD (por defecto Administrador)
+                usuarioLogueado = new Usuario(user, pass, "Administrador");
+            } 
+            // 2. Si no está en la BD, verificar si es un Estudiante en el archivo plano txt
+            else if (CuentasEstudiantes.autenticar(user, pass)) {
                 accesoPermitido = true;
                 usuarioLogueado = new Usuario(user, pass, "Estudiante", user);
             }
 
-            if (accesoPermitido) {
-                JOptionPane.showMessageDialog(this, "Bienvenido " + usuarioLogueado.getRol());
-                // Abrir la ventana principal con el usuario y rol
+            // 3. Evaluar el resultado del acceso
+            if (accesoPermitido && usuarioLogueado != null) {
+                JOptionPane.showMessageDialog(this, "¡Bienvenido al sistema como " + usuarioLogueado.getRol() + "!");
+                
+                // Abrir la ventana principal pasando el usuario autenticado
                 MenuPrincipal ventana = new MenuPrincipal(usuarioLogueado);
                 ventana.setVisible(true);
-                this.dispose(); // Cierra login
+                this.dispose(); // Cierra la ventana de login
             } else {
-                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos");
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de acceso", JOptionPane.ERROR_MESSAGE);
             }
         });
     }

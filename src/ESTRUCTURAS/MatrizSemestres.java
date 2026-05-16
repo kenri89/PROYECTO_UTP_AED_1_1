@@ -54,15 +54,31 @@ public class MatrizSemestres {
 
     // ✅ NUEVO: método para actualizar curso directamente en la matriz
     public boolean actualizarCurso(String codigo, Curso actualizado) {
+        // Recorremos toda la matriz buscando el curso por su código único
         for (int fila = 0; fila < filas; fila++) {
             for (int col = 0; col < columnas; col++) {
-                Curso actual = matriz[fila][col];
-                if (actual != null && actual.getCodigo().equalsIgnoreCase(codigo)) {
+                Curso cursoActual = matriz[fila][col];
+
+                // Si encontramos la celda donde está el curso
+                if (cursoActual != null && cursoActual.getCodigo().equalsIgnoreCase(codigo)) {
+
+                    // VALIDACIÓN CRÍTICA: ¿El nuevo semestre es diferente al que tenía antes?
+                    if (cursoActual.getSemestre() != actualizado.getSemestre()) {
+
+                        // 1. Vaciamos la celda vieja para que no quede un duplicado huérfano
+                        matriz[fila][col] = null; 
+
+                        // 2. Reubicamos el curso en la nueva fila que le corresponde
+                        // Nota: Aquí llamamos a tu método existente 'insertarPorSemestre' para que busque espacio libre en la nueva fila.
+                        return insertarPorSemestre(actualizado); 
+                    }
+
+                    // Si el semestre no cambió, simplemente actualizamos los datos en la misma celda
                     matriz[fila][col] = actualizado;
-                    return true;
+                    return true; 
                 }
             }
         }
-        return false;
+        return false; // Retorna falso si el código del curso no existía en la matriz
     }
 }

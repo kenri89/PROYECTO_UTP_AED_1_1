@@ -36,9 +36,8 @@ public class PanelCursos extends JPanel {
 
         agregarFormulario();
         agregarTabla();
-        cargarTabla();
+        cargarDatosDesdeSQL();
     }
-
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(7, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos del Curso"));
@@ -147,19 +146,28 @@ public class PanelCursos extends JPanel {
 
         int creditos;
         try {
+            box_creditos:
             creditos = Integer.parseInt(creditosStr);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Los créditos deben ser un número.");
             return;
         }
 
-        Curso nuevo = new Curso(codigo, nombre, creditos, semestre);
-        arregloCursos.insertar(nuevo);
-        matrizSemestres.insertarPorSemestre(nuevo);
-        listaCursos.insertar(nuevo);
+        dao.CursoDAO cursoDAO = new dao.CursoDAO();
+        boolean exitoSQL = cursoDAO.insertar(codigo, nombre, semestre);
 
-        cargarTabla();
-        limpiarCampos();
+        if (exitoSQL) {
+            Curso nuevo = new Curso(codigo, nombre, creditos, semestre);
+            arregloCursos.insertar(nuevo);
+            matrizSemestres.insertarPorSemestre(nuevo);
+            listaCursos.insertar(nuevo);
+
+            JOptionPane.showMessageDialog(this, "Curso registrado con éxito.");
+            cargarTabla();
+            limpiarCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar el curso en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void eliminarCurso() {
@@ -244,5 +252,23 @@ public class PanelCursos extends JPanel {
         txtCreditos.setText("");
         comboSemestre.setSelectedIndex(0);
         txtCodigo.setEnabled(true);
+    }
+    private void cargarDatosDesdeSQL() {
+        dao.CursoDAO cursoDAO = new dao.CursoDAO();
+        java.util.List<String[]> cursosSQL = cursoDAO.listar();
+
+        for (String[] datos : cursosSQL) {
+            String codigo = datos[0];
+            String nombre = datos[1];
+            int semestre = Integer.parseInt(datos[2]);
+            int creditosPredeterminados = 4;
+
+            Curso curso = new Curso(codigo, nombre, creditosPredeterminados, semestre);
+            arregloCursos.insertar(curso);
+            matrizSemestres.insertarPorSemestre(curso);
+            listaCursos.insertar(curso);
+        }
+
+        cargarTabla();
     }
 }

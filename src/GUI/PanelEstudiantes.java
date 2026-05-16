@@ -29,7 +29,7 @@ public class PanelEstudiantes extends JPanel {
 
         agregarFormulario();
         agregarTabla();
-        cargarTablaInorden(); // por defecto mostrar inorden
+        cargarDatosDesdeSQL(); 
     }
 
     private void agregarFormulario() {
@@ -86,6 +86,7 @@ public class PanelEstudiantes extends JPanel {
         tabla.setComponentPopupMenu(menu);
 
         tabla.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 int fila = tabla.rowAtPoint(e.getPoint());
                 tabla.getSelectionModel().setSelectionInterval(fila, fila);
@@ -143,10 +144,20 @@ public class PanelEstudiantes extends JPanel {
             return;
         }
 
-        Estudiante estudiante = new Estudiante(carnet, nombre, carrera);
-        arbol.insertar(estudiante);
-        cargarRecorrido("inorden");
-        limpiarCampos();
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        boolean exitoSQL = estudianteDAO.insertar(carnet, nombre, carrera);
+
+        if (exitoSQL) {
+            Estudiante estudiante = new Estudiante(carnet, nombre, carrera);
+            arbol.insertar(estudiante);
+            
+            JOptionPane.showMessageDialog(this, "Estudiante registrado con éxito.");
+            
+            cargarRecorrido("inorden");
+            limpiarCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void actualizarEstudiante() {
@@ -218,13 +229,21 @@ public class PanelEstudiantes extends JPanel {
         }
     }
 
-    private void cargarTablaInorden() {
-        cargarRecorrido("inorden");
-    }
-
     private void limpiarCampos() {
         txtCarnet.setText("");
         txtNombre.setText("");
         comboCarrera.setSelectedIndex(0);
+    }
+
+    private void cargarDatosDesdeSQL() {
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        java.util.List<String[]> estudiantesSQL = estudianteDAO.listar();
+
+        for (String[] datos : estudiantesSQL) {
+            Estudiante estudiante = new Estudiante(datos[0], datos[1], datos[2]);
+            arbol.insertar(estudiante);
+        }
+
+        cargarRecorrido("inorden");
     }
 }
