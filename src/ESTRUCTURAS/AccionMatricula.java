@@ -1,7 +1,7 @@
 package estructuras;
 
 import modelo.Matricula;
-
+//prueba
 public class AccionMatricula {
     private String tipo; // REGISTRO, ACTUALIZACIÓN, ELIMINACIÓN
     private Matricula matricula;
