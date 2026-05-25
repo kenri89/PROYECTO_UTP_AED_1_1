@@ -1,12 +1,11 @@
 package estructuras;
 
 import modelo.Estudiante;
-
 import java.util.function.Consumer;
 
 public class ArbolEstudiantes {
-
-    private class Nodo {
+    
+    private static class Nodo {
         Estudiante estudiante;
         Nodo izquierda, derecha;
 
@@ -21,7 +20,6 @@ public class ArbolEstudiantes {
         raiz = null;
     }
 
-    // Insertar estudiante en el ABB
     public void insertar(Estudiante nuevo) {
         raiz = insertarRec(raiz, nuevo);
     }
@@ -30,7 +28,6 @@ public class ArbolEstudiantes {
         if (actual == null) {
             return new Nodo(nuevo);
         }
-
         int cmp = nuevo.getCarnet().compareTo(actual.estudiante.getCarnet());
         if (cmp < 0) {
             actual.izquierda = insertarRec(actual.izquierda, nuevo);
@@ -40,28 +37,36 @@ public class ArbolEstudiantes {
         return actual;
     }
 
-    // Buscar estudiante por carnet
     public Estudiante buscar(String carnet) {
-        Nodo actual = raiz;
-        while (actual != null) {
-            int cmp = carnet.compareTo(actual.estudiante.getCarnet());
-            if (cmp == 0) return actual.estudiante;
-            else if (cmp < 0) actual = actual.izquierda;
-            else actual = actual.derecha;
-        }
-        return null;
+        return buscarRec(raiz, carnet);
     }
 
-    // Eliminar estudiante por carnet
+    private Estudiante buscarRec(Nodo actual, String carnet) {
+        if (actual == null) return null;
+        int cmp = carnet.compareTo(actual.estudiante.getCarnet());
+        if (cmp == 0) return actual.estudiante;
+        return cmp < 0 ? buscarRec(actual.izquierda, carnet) : buscarRec(actual.derecha, carnet);
+    }
+
+    // ✅ NUEVO: Método actualizar requerido por PanelEstudiantes
+    public boolean actualizar(String carnet, String nuevoNombre, String nuevaCarrera) {
+        Estudiante est = buscar(carnet);
+        if (est != null) {
+            est.setNombre(nuevoNombre);
+            est.setCarrera(nuevaCarrera);
+            return true;
+        }
+        return false;
+    }
+
+    // ✅ NUEVO: Método eliminar requerido por PanelEstudiantes
     public void eliminar(String carnet) {
         raiz = eliminarRec(raiz, carnet);
     }
 
     private Nodo eliminarRec(Nodo actual, String carnet) {
         if (actual == null) return null;
-
         int cmp = carnet.compareTo(actual.estudiante.getCarnet());
-
         if (cmp < 0) {
             actual.izquierda = eliminarRec(actual.izquierda, carnet);
         } else if (cmp > 0) {
@@ -69,23 +74,20 @@ public class ArbolEstudiantes {
         } else {
             if (actual.izquierda == null) return actual.derecha;
             if (actual.derecha == null) return actual.izquierda;
-
-            Nodo sucesor = encontrarMin(actual.derecha);
-            actual.estudiante = sucesor.estudiante;
-            actual.derecha = eliminarRec(actual.derecha, sucesor.estudiante.getCarnet());
+            actual.estudiante = encontrarMinimo(actual.derecha);
+            actual.derecha = eliminarRec(actual.derecha, actual.estudiante.getCarnet());
         }
-
         return actual;
     }
 
-    private Nodo encontrarMin(Nodo nodo) {
-        while (nodo.izquierda != null) {
-            nodo = nodo.izquierda;
+    private Estudiante encontrarMinimo(Nodo actual) {
+        while (actual.izquierda != null) {
+            actual = actual.izquierda;
         }
-        return nodo;
+        return actual.estudiante;
     }
 
-    // Recorrido inorden
+    // ✅ SINCRO: Métodos de recorrido en minúscula exigidos por los Paneles
     public void inorden(Consumer<Estudiante> accion) {
         inordenRec(raiz, accion);
     }
@@ -98,7 +100,6 @@ public class ArbolEstudiantes {
         }
     }
 
-    // Recorrido preorden
     public void preorden(Consumer<Estudiante> accion) {
         preordenRec(raiz, accion);
     }
@@ -111,7 +112,6 @@ public class ArbolEstudiantes {
         }
     }
 
-    // Recorrido postorden
     public void postorden(Consumer<Estudiante> accion) {
         postordenRec(raiz, accion);
     }
@@ -121,23 +121,6 @@ public class ArbolEstudiantes {
             postordenRec(actual.izquierda, accion);
             postordenRec(actual.derecha, accion);
             accion.accept(actual.estudiante);
-        }
-    }
-
-    // Actualizar estudiante
-    public void actualizar(String carnet, String nuevoNombre, String nuevaCarrera) {
-        Nodo actual = raiz;
-        while (actual != null) {
-            int cmp = carnet.compareTo(actual.estudiante.getCarnet());
-            if (cmp == 0) {
-                actual.estudiante.setNombre(nuevoNombre);
-                actual.estudiante.setCarrera(nuevaCarrera);
-                return;
-            } else if (cmp < 0) {
-                actual = actual.izquierda;
-            } else {
-                actual = actual.derecha;
-            }
         }
     }
 }
