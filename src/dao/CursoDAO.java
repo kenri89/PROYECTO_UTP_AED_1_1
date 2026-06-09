@@ -6,9 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import Util.ConexionSQL;
+import util.ConexionSQL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CursoDAO {
+public class CursoDAO implements ICursoDAO {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CursoDAO.class);
 
     public boolean insertar(String codigo, String nombre, int semestre) {
         String sql = "INSERT INTO Cursos (codigo, nombre, semestre) VALUES (?, ?, ?)";
@@ -19,7 +23,7 @@ public class CursoDAO {
             ps.setInt(3, semestre);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Error al insertar curso: " + e.getMessage());
+            LOGGER.error("Error al insertar curso: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -38,7 +42,7 @@ public class CursoDAO {
                 lista.add(curso);
             }
         } catch (SQLException e) {
-            System.out.println("Error al listar cursos: " + e.getMessage());
+            LOGGER.error("Error al listar cursos: {}", e.getMessage(), e);
         }
         return lista;
     }

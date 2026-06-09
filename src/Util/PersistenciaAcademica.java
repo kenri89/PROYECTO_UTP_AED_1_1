@@ -1,5 +1,6 @@
 package util;
 
+import com.google.common.base.Strings;
 import estructuras.ArbolEstudiantes;
 import estructuras.ArregloCursos;
 import estructuras.ListaCursos;
@@ -22,12 +23,13 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Guarda y carga datos en disco (UTF-8) para conservarlos entre sesiones.
- * Ubicación: carpeta {@value #DIR_NAME} dentro del directorio de inicio del usuario.
- */
 public final class PersistenciaAcademica {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistenciaAcademica.class);
 
     public static final String DIR_NAME = ".proyecto_utp_aed_datos";
     private static final String CURSOS = "cursos.tsv";
@@ -45,10 +47,33 @@ public final class PersistenciaAcademica {
     }
 
     private static String esc(String s) {
-        if (s == null) {
-            return "";
+        return Strings.nullToEmpty(s).replace("\t", " ").replace("\r", " ").replace("\n", " ");
+    }
+
+    @FunctionalInterface
+    private interface LineParser {
+        void parse(String[] columns) throws IOException;
+    }
+
+    private static void leerTsv(Path dir, String nombre, int columnas, LineParser parser) {
+        Path archivo = dir.resolve(nombre);
+        if (!Files.isRegularFile(archivo)) {
+            return;
         }
-        return s.replace("\t", " ").replace("\r", " ").replace("\n", " ");
+        try {
+            for (String linea : Files.readAllLines(archivo, StandardCharsets.UTF_8)) {
+                if (linea.isBlank() || linea.startsWith("#")) {
+                    continue;
+                }
+                String[] p = linea.split("\t", -1);
+                if (p.length < columnas) {
+                    continue;
+                }
+                parser.parse(p);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Persistencia: error leyendo {}", nombre, e);
+        }
     }
 
     public static void guardar(ArregloCursos arregloCursos,
@@ -118,7 +143,7 @@ public final class PersistenciaAcademica {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Persistencia: no se pudo guardar: " + e.getMessage());
+            LOGGER.error("Persistencia: no se pudo guardar", e);
         }
     }
 
@@ -142,116 +167,53 @@ public final class PersistenciaAcademica {
             colaSolicitudes.poll();
         }
 
-        Path pc = dir.resolve(CURSOS);
-        if (Files.isRegularFile(pc)) {
-            try {
-                for (String linea : Files.readAllLines(pc, StandardCharsets.UTF_8)) {
-                    if (linea.isBlank() || linea.startsWith("#")) {
-                        continue;
-                    }
-                    String[] p = linea.split("\t", -1);
-                    if (p.length < 4) {
-                        continue;
-                    }
-                    try {
-                        int creditos = Integer.parseInt(p[2].trim());
-                        int semestre = Integer.parseInt(p[3].trim());
-                        Curso c = new Curso(p[0].trim(), p[1].trim(), creditos, semestre);
-                        arregloCursos.insertar(c);
-                        matrizSemestres.insertarPorSemestre(c);
-                        listaCursos.insertar(c);
-                    } catch (NumberFormatException ignored) {
-                        // línea inválida
-                    }
-                }
-            } catch (IOException e) {
-                System.err.println("Persistencia: error leyendo cursos: " + e.getMessage());
-            }
-        }
+        leerTsv(dir, CURSOS, 4, p -> {
+            int creditos = Integer.parseInt(p[2].trim());
+            int semestre = Integer.parseInt(p[3].trim());
+            Curso c = new Curso(p[0].trim(), p[1].trim(), creditos, semestre);
+            arregloCursos.insertar(c);
+            matrizSemestres.insertarPorSemestre(c);
+            listaCursos.insertar(c);
+        });
 
-        Path pe = dir.resolve(ESTUDIANTES);
-        if (Files.isRegularFile(pe)) {
-            try {
-                for (String linea : Files.readAllLines(pe, StandardCharsets.UTF_8)) {
-                    if (linea.isBlank() || linea.startsWith("#")) {
-                        continue;
-                    }
-                    String[] p = linea.split("\t", -1);
-                    if (p.length < 3) {
-                        continue;
-                    }
-                    arbolEstudiantes.insertar(new Estudiante(p[0].trim(), p[1].trim(), p[2].trim()));
-                }
-            } catch (IOException e) {
-                System.err.println("Persistencia: error leyendo estudiantes: " + e.getMessage());
-            }
-        }
+        leerTsv(dir, ESTUDIANTES, 3, p -> {
+            arbolEstudiantes.insertar(new Estudiante(p[0].trim(), p[1].trim(), p[2].trim()));
+        });
 
-        Path pm = dir.resolve(MATRICULAS);
-        if (Files.isRegularFile(pm)) {
-            try {
-                for (String linea : Files.readAllLines(pm, StandardCharsets.UTF_8)) {
-                    if (linea.isBlank() || linea.startsWith("#")) {
-                        continue;
-                    }
-                    String[] p = linea.split("\t", -1);
-                    if (p.length < 2) {
-                        continue;
-                    }
-                    String carnet = p[0].trim();
-                    String codigo = p[1].trim();
-                    Estudiante est = arbolEstudiantes.buscar(carnet);
-                    Curso cur = listaCursos.buscar(codigo);
-                    if (est != null && cur != null) {
-                        listaMatricula.agregar(new Matricula(est, cur));
-                    }
-                }
-            } catch (IOException e) {
-                System.err.println("Persistencia: error leyendo matrículas: " + e.getMessage());
+        leerTsv(dir, MATRICULAS, 2, p -> {
+            String carnet = p[0].trim();
+            String codigo = p[1].trim();
+            Estudiante est = arbolEstudiantes.buscar(carnet);
+            Curso cur = listaCursos.buscar(codigo);
+            if (est != null && cur != null) {
+                listaMatricula.agregar(new Matricula(est, cur));
             }
-        }
+        });
 
         listaMatricula.recorrer(m -> CuentasEstudiantes.registrarPorMatricula(m.getEstudiante().getCarnet()));
 
-        Path ps = dir.resolve(SOLICITUDES);
-        if (Files.isRegularFile(ps)) {
+        leerTsv(dir, SOLICITUDES, 6, p -> {
+            LocalDateTime fecha = null;
+            LocalDateTime fechaAt = null;
             try {
-                for (String linea : Files.readAllLines(ps, StandardCharsets.UTF_8)) {
-                    if (linea.isBlank() || linea.startsWith("#")) {
-                        continue;
-                    }
-                    String[] p = linea.split("\t", -1);
-                    if (p.length < 6) {
-                        continue;
-                    }
-                    LocalDateTime fecha = null;
-                    LocalDateTime fechaAt = null;
-                    try {
-                        if (!p[3].trim().isEmpty()) {
-                            fecha = LocalDateTime.parse(p[3].trim(), ISO);
-                        }
-                    } catch (DateTimeParseException ignored) {
-                    }
-                    try {
-                        if (!p[5].trim().isEmpty()) {
-                            fechaAt = LocalDateTime.parse(p[5].trim(), ISO);
-                        }
-                    } catch (DateTimeParseException ignored) {
-                    }
-                    boolean atendida = "1".equals(p[4].trim()) || "true".equalsIgnoreCase(p[4].trim());
-                    Solicitud sol = new Solicitud(
-                            p[0].trim(),
-                            p[1].trim(),
-                            p[2].trim(),
-                            fecha != null ? fecha : LocalDateTime.now(),
-                            atendida,
-                            fechaAt
-                    );
-                    colaSolicitudes.add(sol);
+                if (!p[3].trim().isEmpty()) {
+                    fecha = LocalDateTime.parse(p[3].trim(), ISO);
                 }
-            } catch (IOException e) {
-                System.err.println("Persistencia: error leyendo solicitudes: " + e.getMessage());
+            } catch (DateTimeParseException ignored) {
             }
-        }
+            try {
+                if (!p[5].trim().isEmpty()) {
+                    fechaAt = LocalDateTime.parse(p[5].trim(), ISO);
+                }
+            } catch (DateTimeParseException ignored) {
+            }
+            boolean atendida = "1".equals(p[4].trim()) || "true".equalsIgnoreCase(p[4].trim());
+            Solicitud sol = new Solicitud(
+                    p[0].trim(), p[1].trim(), p[2].trim(),
+                    fecha != null ? fecha : LocalDateTime.now(),
+                    atendida, fechaAt
+            );
+            colaSolicitudes.add(sol);
+        });
     }
 }

@@ -8,12 +8,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Usuarios de ingreso para estudiantes: usuario = carnet, contraseña fija {@value #PASSWORD_DEFECTO}.
- * Se crean al matricular (y se sincronizan al cargar datos guardados).
- */
 public final class CuentasEstudiantes {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CuentasEstudiantes.class);
 
     public static final String PASSWORD_DEFECTO = "1234";
     private static final String ARCHIVO = "cuentas_estudiantes.txt";
@@ -25,9 +25,6 @@ public final class CuentasEstudiantes {
         return Paths.get(System.getProperty("user.home"), PersistenciaAcademica.DIR_NAME, ARCHIVO);
     }
 
-    /**
-     * Registra el carnet como usuario de acceso si aún no existe (idempotente).
-     */
     public static void registrarPorMatricula(String carnetRaw) {
         String carnet = carnetRaw == null ? "" : carnetRaw.trim();
         if (carnet.isEmpty()) {
@@ -43,7 +40,7 @@ public final class CuentasEstudiantes {
             carnets.add(carnet);
             escribirCarnets(f, carnets);
         } catch (IOException e) {
-            System.err.println("CuentasEstudiantes: no se pudo guardar cuenta: " + e.getMessage());
+            LOGGER.error("CuentasEstudiantes: no se pudo guardar cuenta", e);
         }
     }
 
@@ -69,9 +66,6 @@ public final class CuentasEstudiantes {
         }
     }
 
-    /**
-     * Usuario = carnet exacto, contraseña = 1234.
-     */
     public static boolean autenticar(String usuario, String password) {
         if (usuario == null || password == null || !PASSWORD_DEFECTO.equals(password)) {
             return false;
@@ -92,7 +86,7 @@ public final class CuentasEstudiantes {
                 }
             }
         } catch (IOException e) {
-            return false;
+            LOGGER.error("CuentasEstudiantes: error al autenticar", e);
         }
         return false;
     }
