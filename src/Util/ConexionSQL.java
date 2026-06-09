@@ -21,7 +21,7 @@ public class ConexionSQL {
         DEFAULTS.setProperty("db.name", "iestp_peru_japon");
         DEFAULTS.setProperty("db.user", "sa");
         DEFAULTS.setProperty("db.password", "1234");
-        DEFAULTS.setProperty("db.encrypt", "true");
+        DEFAULTS.setProperty("db.encrypt", "false");
         DEFAULTS.setProperty("db.trustCertificate", "true");
     }
 
@@ -44,11 +44,23 @@ public class ConexionSQL {
         Connection cn = null;
         try {
             Properties p = cargarProperties();
-            String url = "jdbc:sqlserver://" + p.getProperty("db.server") + ":" + p.getProperty("db.port")
-                    + ";databaseName=" + p.getProperty("db.name")
-                    + ";encrypt=" + p.getProperty("db.encrypt")
-                    + ";trustServerCertificate=" + p.getProperty("db.trustCertificate") + ";";
-            cn = DriverManager.getConnection(url, p.getProperty("db.user"), p.getProperty("db.password"));
+            String server = p.getProperty("db.server");
+            String port = p.getProperty("db.port");
+            String dbName = p.getProperty("db.name");
+            String user = p.getProperty("db.user");
+            String password = p.getProperty("db.password");
+            String encrypt = p.getProperty("db.encrypt");
+            String trustCert = p.getProperty("db.trustCertificate");
+
+            StringBuilder url = new StringBuilder("jdbc:sqlserver://").append(server);
+            url.append(":").append(port);
+            url.append(";databaseName=").append(dbName);
+            url.append(";encrypt=").append(encrypt);
+            url.append(";trustServerCertificate=").append(trustCert);
+
+            LOGGER.info("Conectando a BD: {}:{}/{}", server, port, dbName);
+            cn = DriverManager.getConnection(url.toString(), user, password);
+            LOGGER.info("Conexion exitosa");
         } catch (SQLException e) {
             LOGGER.error("Error de conexion a BD", e);
         }
