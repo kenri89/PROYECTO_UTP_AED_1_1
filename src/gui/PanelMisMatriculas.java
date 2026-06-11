@@ -2,17 +2,18 @@ package gui;
 
 import estructuras.ArbolEstudiantes;
 import estructuras.ListaMatricula;
+import modelo.Curso;
 import modelo.Estudiante;
 import modelo.Matricula;
+import util.ExportadorExcel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-/**
- * Vista de solo lectura: cursos en los que está matriculado el estudiante actual.
- */
 public class PanelMisMatriculas extends JPanel {
 
     private final ListaMatricula listaMatricula;
@@ -57,13 +58,59 @@ public class PanelMisMatriculas extends JPanel {
         btnActualizar.setBackground(new Color(0, 120, 215));
         btnActualizar.setForeground(Color.BLACK);
         btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
+
+        JButton btnExportar = new JButton("Descargar reporte");
+        btnExportar.setBackground(new Color(0, 150, 50));
+        btnExportar.setForeground(Color.BLACK);
+        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
+
         JPanel sur = new JPanel();
         sur.setOpaque(false);
         sur.add(btnActualizar);
+        sur.add(Box.createHorizontalStrut(10));
+        sur.add(btnExportar);
         add(sur, BorderLayout.SOUTH);
 
-        btnActualizar.addActionListener(e -> cargarTabla());
+        btnActualizar.addActionListener(e -> {
+            cargarDatosDesdeSQL();
+            cargarTabla();
+        });
+        btnExportar.addActionListener(e -> exportarReporte());
+        cargarDatosDesdeSQL();
         cargarTabla();
+    }
+
+    private void cargarDatosDesdeSQL() {
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
+        dao.CursoDAO cursoDAO = new dao.CursoDAO();
+        List<String[]> estudiantesSQL = estudianteDAO.listar();
+        List<String[]> cursosSQL = cursoDAO.listar();
+        List<String[]> matriculasSQL = matriculaDAO.listar();
+
+        arbolEstudiantes.limpiar();
+        for (String[] datos : estudiantesSQL) {
+            arbolEstudiantes.insertar(new Estudiante(datos[0], datos[1], datos[2]));
+        }
+
+        listaMatricula.limpiar();
+        for (String[] datos : matriculasSQL) {
+            String carnetMat = datos[0];
+            String codigoCurso = datos[1];
+
+            Estudiante est = arbolEstudiantes.buscar(carnetMat);
+            Curso curso = null;
+            for (String[] cd : cursosSQL) {
+                if (cd[0].equals(codigoCurso)) {
+                    curso = new Curso(cd[0], cd[1], Integer.parseInt(cd[2]), Integer.parseInt(cd[3]));
+                    break;
+                }
+            }
+
+            if (est != null && curso != null) {
+                listaMatricula.agregar(new Matricula(est, curso));
+            }
+        }
     }
 
     private void cargarTabla() {
@@ -89,6 +136,24 @@ public class PanelMisMatriculas extends JPanel {
                     m.getCurso().getCreditos(),
                     m.getCurso().getSemestre()
             });
+        }
+    }
+
+    private void exportarReporte() {
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File("reporte_matriculas.xls"));
+        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                List<Matricula> mis = listaMatricula.buscarPorCarnet(carnet);
+                ListaMatricula filtrada = new ListaMatricula();
+                for (Matricula m : mis) {
+                    filtrada.agregar(m);
+                }
+                ExportadorExcel.exportarMatriculas(filtrada, fc.getSelectedFile());
+                JOptionPane.showMessageDialog(this, "Reporte descargado exitosamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al descargar reporte: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }

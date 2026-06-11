@@ -1,5 +1,7 @@
 package dao;
 
+import modelo.Usuario;
+
 public interface IUsuarioDAO {
-    boolean validarUsuario(String username, String password);
+    Usuario autenticar(String username, String password, String rolSeleccionado);
 }
