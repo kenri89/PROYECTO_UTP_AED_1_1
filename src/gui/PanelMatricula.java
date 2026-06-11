@@ -1,14 +1,4 @@
-// ================================
-// CLASE: PanelMatricula
-// Tema: Unidad 2 - Lista enlazada y validación
-//       Unidad 3 - Árbol binario de búsqueda
-//       Unidad 4 - GUI con Swing y eventos
-// Uso: Registro, actualización y eliminación de matrículas.
-// Registra las acciones realizadas en una pila para historial.
-// ================================
-
 package gui;
-
 
 import estructuras.ArbolEstudiantes;
 import estructuras.ListaCursos;
@@ -19,11 +9,14 @@ import modelo.Curso;
 import modelo.Estudiante;
 import modelo.Matricula;
 import util.CuentasEstudiantes;
+import util.ExportadorExcel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 
 public class PanelMatricula extends JPanel {
 
@@ -51,10 +44,15 @@ public class PanelMatricula extends JPanel {
         agregarFormulario();
         agregarTabla();
         cargarCombos();
+        try {
+            cargarMatriculasDesdeSQL();
+        } catch (Exception e) {
+            System.err.println("Error al cargar matriculas desde BD: " + e.getMessage());
+        }
     }
 
     private void agregarFormulario() {
-        JPanel panelForm = new JPanel(new GridLayout(6, 2, 5, 5));
+        JPanel panelForm = new JPanel(new GridLayout(5, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos de Matrícula"));
         panelForm.setBackground(new Color(210, 230, 255));
 
@@ -72,13 +70,17 @@ public class PanelMatricula extends JPanel {
         JButton btnDeshacer = new JButton("Deshacer");
 
         btnRegistrar.setBackground(new Color(0, 140, 200));
-        btnRegistrar.setForeground(Color.WHITE);
+        btnRegistrar.setForeground(Color.BLACK);
+        btnRegistrar.setBorder(BorderFactory.createRaisedBevelBorder());
         btnActualizar.setBackground(new Color(0, 170, 100));
-        btnActualizar.setForeground(Color.WHITE);
+        btnActualizar.setForeground(Color.BLACK);
+        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
         btnVer.setBackground(new Color(120, 100, 200));
-        btnVer.setForeground(Color.WHITE);
+        btnVer.setForeground(Color.BLACK);
+        btnVer.setBorder(BorderFactory.createRaisedBevelBorder());
         btnDeshacer.setBackground(new Color(200, 80, 80));
-        btnDeshacer.setForeground(Color.WHITE);
+        btnDeshacer.setForeground(Color.BLACK);
+        btnDeshacer.setBorder(BorderFactory.createRaisedBevelBorder());
 
         panelForm.add(btnRegistrar);
         panelForm.add(btnActualizar);
@@ -87,7 +89,6 @@ public class PanelMatricula extends JPanel {
 
         add(panelForm, BorderLayout.WEST);
 
-        // Acciones
         btnRegistrar.addActionListener(e -> registrarMatricula());
         btnActualizar.addActionListener(e -> actualizarMatricula());
         btnVer.addActionListener(e -> cargarTabla());
@@ -130,7 +131,24 @@ public class PanelMatricula extends JPanel {
 
         itemEliminar.addActionListener(e -> eliminarMatricula());
 
-        add(scroll, BorderLayout.CENTER);
+        JToolBar barraExport = new JToolBar();
+        barraExport.setFloatable(false);
+        barraExport.setBackground(new Color(200, 225, 255));
+        JButton btnExportar = new JButton("Exportar a Excel");
+        btnExportar.setBackground(new Color(0, 150, 50));
+        btnExportar.setForeground(Color.BLACK);
+        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
+        btnExportar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnExportar.addActionListener(e -> exportarExcel());
+        barraExport.add(Box.createHorizontalGlue());
+        barraExport.add(btnExportar);
+        barraExport.add(Box.createHorizontalStrut(10));
+
+        JPanel panelCentral = new JPanel(new BorderLayout());
+        panelCentral.add(scroll, BorderLayout.CENTER);
+        panelCentral.add(barraExport, BorderLayout.SOUTH);
+
+        add(panelCentral, BorderLayout.CENTER);
     }
 
     private void registrarMatricula() {
@@ -150,11 +168,16 @@ public class PanelMatricula extends JPanel {
             return;
         }
 
-        Matricula nueva = new Matricula(est, curso);
-        listaMatricula.agregar(nueva);
-        CuentasEstudiantes.registrarPorMatricula(carnet);
-        pilaHistorial.apilar(new AccionMatricula("REGISTRO", nueva));
-        cargarTabla();
+        dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
+        boolean exitoSQL = matriculaDAO.insertar(carnet, codigo);
+
+        if (exitoSQL) {
+            CuentasEstudiantes.registrarPorMatricula(carnet);
+            JOptionPane.showMessageDialog(this, "Matrícula registrada con éxito en la base de datos.");
+            cargarMatriculasDesdeSQL();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error: no se pudo guardar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void actualizarMatricula() {
@@ -176,12 +199,14 @@ public class PanelMatricula extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(this, "¿Desea actualizar esta matrícula?", "Confirmación", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            Matricula copiaAnterior = new Matricula(matriculaSeleccionada.getEstudiante(), matriculaSeleccionada.getCurso());
-            pilaHistorial.apilar(new AccionMatricula("ACTUALIZACIÓN", copiaAnterior));
+            String carnetViejo = matriculaSeleccionada.getEstudiante().getCarnet();
+            String cursoViejo = matriculaSeleccionada.getCurso().getCodigo();
 
-            matriculaSeleccionada.setEstudiante(nuevoEst);
-            matriculaSeleccionada.setCurso(nuevoCur);
-            cargarTabla();
+            dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
+            matriculaDAO.eliminar(carnetViejo, cursoViejo);
+            matriculaDAO.insertar(nuevoCarnet, nuevoCurso);
+
+            cargarMatriculasDesdeSQL();
             matriculaSeleccionada = null;
         }
     }
@@ -197,13 +222,9 @@ public class PanelMatricula extends JPanel {
                     "Confirmación", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                Matricula eliminada = listaMatricula.buscar(carnet, codigo);
-                if (eliminada != null) {
-                    pilaHistorial.apilar(new AccionMatricula("ELIMINACIÓN", eliminada));
-                }
-
-                listaMatricula.eliminar(carnet, codigo);
-                cargarTabla();
+                dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
+                matriculaDAO.eliminar(carnet, codigo);
+                cargarMatriculasDesdeSQL();
             }
         }
     }
@@ -215,27 +236,30 @@ public class PanelMatricula extends JPanel {
         }
 
         AccionMatricula ultima = pilaHistorial.desapilar();
+        dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
 
         switch (ultima.getTipo()) {
             case "REGISTRO":
                 Matricula reg = ultima.getMatricula();
-                listaMatricula.eliminar(reg.getEstudiante().getCarnet(), reg.getCurso().getCodigo());
+                matriculaDAO.eliminar(reg.getEstudiante().getCarnet(), reg.getCurso().getCodigo());
                 break;
             case "ELIMINACIÓN":
                 Matricula elim = ultima.getMatricula();
-                listaMatricula.agregar(elim);
+                matriculaDAO.insertar(elim.getEstudiante().getCarnet(), elim.getCurso().getCodigo());
                 break;
             case "ACTUALIZACIÓN":
                 Matricula anterior = ultima.getMatricula();
                 Matricula actual = listaMatricula.buscar(anterior.getEstudiante().getCarnet(), anterior.getCurso().getCodigo());
                 if (actual != null) {
-                    actual.setEstudiante(anterior.getEstudiante());
-                    actual.setCurso(anterior.getCurso());
+                    String carnetActual = actual.getEstudiante().getCarnet();
+                    String cursoActual = actual.getCurso().getCodigo();
+                    matriculaDAO.eliminar(carnetActual, cursoActual);
+                    matriculaDAO.insertar(anterior.getEstudiante().getCarnet(), anterior.getCurso().getCodigo());
                 }
                 break;
         }
 
-        cargarTabla();
+        cargarMatriculasDesdeSQL();
     }
 
     private void cargarCombos() {
@@ -246,6 +270,27 @@ public class PanelMatricula extends JPanel {
         listaCursos.recorrer(curso -> comboCodigoCurso.addItem(curso.getCodigo()));
     }
 
+    private void cargarMatriculasDesdeSQL() {
+        dao.MatriculaDAO matriculaDAO = new dao.MatriculaDAO();
+        java.util.List<String[]> matriculasSQL = matriculaDAO.listar();
+
+        listaMatricula.limpiar();
+
+        for (String[] datos : matriculasSQL) {
+            String carnet = datos[0];
+            String codigoCurso = datos[1];
+
+            Estudiante est = arbolEstudiantes.buscar(carnet);
+            Curso curso = listaCursos.buscar(codigoCurso);
+
+            if (est != null && curso != null) {
+                listaMatricula.agregar(new Matricula(est, curso));
+            }
+        }
+
+        cargarTabla();
+    }
+
     private void cargarTabla() {
         modelo.setRowCount(0);
         listaMatricula.recorrer(m -> modelo.addRow(new Object[]{
@@ -254,5 +299,18 @@ public class PanelMatricula extends JPanel {
                 m.getCurso().getCodigo(),
                 m.getCurso().getNombre()
         }));
+    }
+
+    private void exportarExcel() {
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File("matriculas.xlsx"));
+        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                ExportadorExcel.exportarMatriculas(listaMatricula, fc.getSelectedFile());
+                JOptionPane.showMessageDialog(this, "Matrículas exportadas a Excel exitosamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

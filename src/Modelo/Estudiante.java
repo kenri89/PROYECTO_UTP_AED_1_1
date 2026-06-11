@@ -1,9 +1,8 @@
 package modelo;
 
-/**
- * Modelo de datos para estudiante
- * Tema: Unidad 3 – Árbol Binario de Búsqueda
- */
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.MoreObjects;
+
 public class Estudiante {
 
     private String carnet;
@@ -11,9 +10,9 @@ public class Estudiante {
     private String carrera;
 
     public Estudiante(String carnet, String nombre, String carrera) {
-        this.carnet = carnet;
-        this.nombre = nombre;
-        this.carrera = carrera;
+        this.carnet = checkNotNull(carnet, "El carnet no puede ser nulo");
+        this.nombre = checkNotNull(nombre, "El nombre no puede ser nulo");
+        this.carrera = checkNotNull(carrera, "La carrera no puede ser nula");
     }
 
     public String getCarnet() {
@@ -21,7 +20,7 @@ public class Estudiante {
     }
 
     public void setCarnet(String carnet) {
-        this.carnet = carnet;
+        this.carnet = checkNotNull(carnet, "El carnet no puede ser nulo");
     }
 
     public String getNombre() {
@@ -29,7 +28,7 @@ public class Estudiante {
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
+        this.nombre = checkNotNull(nombre, "El nombre no puede ser nulo");
     }
 
     public String getCarrera() {
@@ -37,11 +36,15 @@ public class Estudiante {
     }
 
     public void setCarrera(String carrera) {
-        this.carrera = carrera;
+        this.carrera = checkNotNull(carrera, "La carrera no puede ser nula");
     }
 
     @Override
     public String toString() {
-        return carnet + " - " + nombre;
+        return MoreObjects.toStringHelper(this)
+                .add("carnet", carnet)
+                .add("nombre", nombre)
+                .add("carrera", carrera)
+                .toString();
     }
 }

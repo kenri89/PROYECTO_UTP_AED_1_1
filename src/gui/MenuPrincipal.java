@@ -8,8 +8,6 @@ import estructuras.MatrizSemestres;
 import estructuras.ArbolEstudiantes;
 import estructuras.ListaMatricula;
 import estructuras.PilaAcciones_U3;
-import util.PersistenciaAcademica;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -42,18 +40,11 @@ public class MenuPrincipal extends JFrame {
         arbolEstudiantes = new ArbolEstudiantes();
         listaMatricula = new ListaMatricula();
 
-        PersistenciaAcademica.cargar(arregloCursos, matrizSemestres, listaCursos,
-                arbolEstudiantes, listaMatricula, colaSolicitudes);
-
         setTitle("Sistema Académico - Rol: " + usuarioActual.getRol());
         setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                guardarDatos();
-            }
         });
         setLayout(new BorderLayout());
 
@@ -109,9 +100,10 @@ public class MenuPrincipal extends JFrame {
 
         for (JButton btn : botones) {
             btn.setBackground(azulBoton);
-            btn.setForeground(Color.WHITE);
+            btn.setForeground(Color.BLACK);
             btn.setFont(new Font("Arial", Font.BOLD, 14));
             btn.setPreferredSize(new Dimension(200, 50));
+            btn.setBorder(BorderFactory.createRaisedBevelBorder());
             panelBotones.add(btn);
         }
 
@@ -189,14 +181,9 @@ public class MenuPrincipal extends JFrame {
         btnSalir.addActionListener(e -> {
             int confirmar = JOptionPane.showConfirmDialog(this, "¿Deseas salir?", "Confirmar salida", JOptionPane.YES_NO_OPTION);
             if (confirmar == JOptionPane.YES_OPTION) {
-                guardarDatos();
                 System.exit(0);
             }
         });
     }
 
-    private void guardarDatos() {
-        PersistenciaAcademica.guardar(arregloCursos, arbolEstudiantes, matrizSemestres,
-                listaCursos, listaMatricula, colaSolicitudes);
-    }
 }

@@ -2,17 +2,15 @@ package gui;
 
 import estructuras.ArbolEstudiantes;
 import modelo.Estudiante;
-import dao.EstudianteDAO;
+import util.ExportadorExcel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 
-/**
- * GUI para gestión de estudiantes.
- * Tema: Unidad 3 – Árbol Binario de Búsqueda (ABB) Sincronizado con SQL Server
- */
 public class PanelEstudiantes extends JPanel {
 
     private ArbolEstudiantes arbol;
@@ -20,6 +18,7 @@ public class PanelEstudiantes extends JPanel {
     private DefaultTableModel modelo;
     private JTextField txtCarnet, txtNombre;
     private JComboBox<String> comboCarrera;
+
     private String carnetSeleccionado = null;
 
     public PanelEstudiantes(ArbolEstudiantes arbol) {
@@ -29,13 +28,17 @@ public class PanelEstudiantes extends JPanel {
 
         agregarFormulario();
         agregarTabla();
-        cargarDatosDesdeSQL();
+        try {
+            cargarDatosDesdeSQL();
+        } catch (Exception e) {
+            System.err.println("Error al cargar datos desde BD (usando modo local): " + e.getMessage());
+        } 
     }
 
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(5, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos del Estudiante"));
-        panelForm.setBackground(new Color(210, 235, 255));
+        panelForm.setBackground(new Color(220, 230, 255));
 
         txtCarnet = new JTextField();
         txtNombre = new JTextField();
@@ -53,11 +56,14 @@ public class PanelEstudiantes extends JPanel {
         JButton btnBuscar = new JButton("Buscar por carnet");
 
         btnAgregar.setBackground(new Color(30, 120, 200));
-        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setForeground(Color.BLACK);
+        btnAgregar.setBorder(BorderFactory.createRaisedBevelBorder());
         btnActualizar.setBackground(new Color(60, 150, 80));
-        btnActualizar.setForeground(Color.WHITE);
+        btnActualizar.setForeground(Color.BLACK);
+        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
         btnBuscar.setBackground(new Color(120, 120, 200));
-        btnBuscar.setForeground(Color.WHITE);
+        btnBuscar.setForeground(Color.BLACK);
+        btnBuscar.setBorder(BorderFactory.createRaisedBevelBorder());
 
         panelForm.add(btnAgregar);
         panelForm.add(btnActualizar);
@@ -89,9 +95,7 @@ public class PanelEstudiantes extends JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 int fila = tabla.rowAtPoint(e.getPoint());
-                if (fila >= 0) {
-                    tabla.getSelectionModel().setSelectionInterval(fila, fila);
-                }
+                tabla.getSelectionModel().setSelectionInterval(fila, fila);
             }
         });
 
@@ -100,7 +104,6 @@ public class PanelEstudiantes extends JPanel {
             if (fila >= 0) {
                 carnetSeleccionado = (String) modelo.getValueAt(fila, 0);
                 txtCarnet.setText((String) modelo.getValueAt(fila, 0));
-                txtCarnet.setEditable(false);
                 txtNombre.setText((String) modelo.getValueAt(fila, 1));
                 comboCarrera.setSelectedItem((String) modelo.getValueAt(fila, 2));
             }
@@ -111,27 +114,21 @@ public class PanelEstudiantes extends JPanel {
         JPanel panelTabla = new JPanel(new BorderLayout());
         panelTabla.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel panelRecorridos = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panelRecorridos.setBackground(new Color(230, 245, 255));
-        
-        JButton btnInorden = new JButton("Inorden");
-        JButton btnPreorden = new JButton("Preorden");
-        JButton btnPostorden = new JButton("Postorden");
+        JToolBar barraExport = new JToolBar();
+        barraExport.setFloatable(false);
+        barraExport.setBackground(new Color(220, 235, 255));
 
-        JButton[] botones = {btnInorden, btnPreorden, btnPostorden};
-        for (JButton b : botones) {
-            b.setBackground(new Color(70, 130, 180));
-            b.setForeground(Color.WHITE);
-            b.setFocusPainted(false);
-            b.setFont(new Font("Arial", Font.BOLD, 12));
-            panelRecorridos.add(b);
-        }
+        JButton btnExportar = new JButton("Exportar a Excel");
+        btnExportar.setBackground(new Color(0, 150, 50));
+        btnExportar.setForeground(Color.BLACK);
+        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
+        btnExportar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnExportar.addActionListener(e -> exportarExcel());
+        barraExport.add(Box.createHorizontalGlue());
+        barraExport.add(btnExportar);
+        barraExport.add(Box.createHorizontalStrut(10));
 
-        btnInorden.addActionListener(e -> cargarRecorrido("inorden"));
-        btnPreorden.addActionListener(e -> cargarRecorrido("preorden"));
-        btnPostorden.addActionListener(e -> cargarRecorrido("postorden"));
-
-        panelTabla.add(panelRecorridos, BorderLayout.SOUTH);
+        panelTabla.add(barraExport, BorderLayout.SOUTH);
         add(panelTabla, BorderLayout.CENTER);
     }
 
@@ -145,23 +142,21 @@ public class PanelEstudiantes extends JPanel {
             return;
         }
 
-        EstudianteDAO estudianteDAO = new EstudianteDAO();
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
         boolean exitoSQL = estudianteDAO.insertar(carnet, nombre, carrera);
 
         if (exitoSQL) {
-            Estudiante estudiante = new Estudiante(carnet, nombre, carrera);
-            arbol.insertar(estudiante);
-            JOptionPane.showMessageDialog(this, "Estudiante registrado con éxito.");
-            cargarRecorrido("inorden");
-            limpiarCampos();
+            JOptionPane.showMessageDialog(this, "Estudiante registrado con éxito en la base de datos.");
+            cargarDatosDesdeSQL();
         } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar en BD o carnet duplicado.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error: no se pudo guardar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+        limpiarCampos();
     }
 
     private void actualizarEstudiante() {
         if (carnetSeleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Debes seleccionar un estudiante desde la tabla.");
+            JOptionPane.showMessageDialog(this, "Debes seleccionar un estudiante desde el menú contextual.");
             return;
         }
 
@@ -175,15 +170,12 @@ public class PanelEstudiantes extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(this, "¿Deseas actualizar este estudiante?", "Confirmar actualización", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            EstudianteDAO estudianteDAO = new EstudianteDAO();
-            if (estudianteDAO.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera)) {
-                arbol.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera);
-                JOptionPane.showMessageDialog(this, "Estudiante actualizado con éxito.");
-                cargarRecorrido("inorden");
-                limpiarCampos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al actualizar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+            estudianteDAO.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera);
+
+            cargarDatosDesdeSQL();
+            limpiarCampos();
+            carnetSeleccionado = null;
         }
     }
 
@@ -192,20 +184,12 @@ public class PanelEstudiantes extends JPanel {
         if (fila >= 0) {
             String carnet = (String) modelo.getValueAt(fila, 0);
             int confirm = JOptionPane.showConfirmDialog(this, "¿Deseas eliminar al estudiante con carnet: " + carnet + "?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
-            
             if (confirm == JOptionPane.YES_OPTION) {
-                EstudianteDAO estudianteDAO = new EstudianteDAO();
-                if (estudianteDAO.eliminar(carnet)) {
-                    arbol.eliminar(carnet);
-                    JOptionPane.showMessageDialog(this, "Estudiante eliminado con éxito.");
-                    cargarRecorrido("inorden");
-                    limpiarCampos();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al eliminar de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+                estudianteDAO.eliminar(carnet);
+
+                cargarDatosDesdeSQL();
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecciona una fila de la tabla para eliminar.");
         }
     }
 
@@ -221,31 +205,44 @@ public class PanelEstudiantes extends JPanel {
         }
     }
 
-    private void cargarRecorrido(String tipo) {
+    private void cargarTabla() {
         modelo.setRowCount(0);
-        switch (tipo.toLowerCase()) {
-            case "inorden" -> arbol.inorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
-            case "preorden" -> arbol.preorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
-            case "postorden" -> arbol.postorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
-        }
+        arbol.inorden(est -> modelo.addRow(new Object[]{
+                est.getCarnet(), est.getNombre(), est.getCarrera()
+        }));
     }
 
     private void limpiarCampos() {
         txtCarnet.setText("");
-        txtCarnet.setEditable(true);
         txtNombre.setText("");
         comboCarrera.setSelectedIndex(0);
-        carnetSeleccionado = null;
     }
 
     private void cargarDatosDesdeSQL() {
-        EstudianteDAO estudianteDAO = new EstudianteDAO();
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
         java.util.List<String[]> estudiantesSQL = estudianteDAO.listar();
+
+        arbol.limpiar();
 
         for (String[] datos : estudiantesSQL) {
             Estudiante estudiante = new Estudiante(datos[0], datos[1], datos[2]);
             arbol.insertar(estudiante);
         }
-        cargarRecorrido("inorden");
+
+        cargarTabla();
+    }
+
+    private void exportarExcel() {
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File("estudiantes.xls"));
+        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File archivo = fc.getSelectedFile();
+            try {
+                ExportadorExcel.exportarEstudiantes(arbol, archivo);
+                JOptionPane.showMessageDialog(this, "Estudiantes exportados a Excel exitosamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

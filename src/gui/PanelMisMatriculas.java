@@ -55,7 +55,8 @@ public class PanelMisMatriculas extends JPanel {
 
         JButton btnActualizar = new JButton("Actualizar lista");
         btnActualizar.setBackground(new Color(0, 120, 215));
-        btnActualizar.setForeground(Color.WHITE);
+        btnActualizar.setForeground(Color.BLACK);
+        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
         JPanel sur = new JPanel();
         sur.setOpaque(false);
         sur.add(btnActualizar);

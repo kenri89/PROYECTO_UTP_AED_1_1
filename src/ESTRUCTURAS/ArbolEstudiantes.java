@@ -87,7 +87,7 @@ public class ArbolEstudiantes {
         return actual.estudiante;
     }
 
-    // ✅ SINCRO: Métodos de recorrido en minúscula exigidos por los Paneles
+    // ✅ SINCRO: Método de recorrido exigido por los Paneles
     public void inorden(Consumer<Estudiante> accion) {
         inordenRec(raiz, accion);
     }
@@ -97,30 +97,6 @@ public class ArbolEstudiantes {
             inordenRec(actual.izquierda, accion);
             accion.accept(actual.estudiante);
             inordenRec(actual.derecha, accion);
-        }
-    }
-
-    public void preorden(Consumer<Estudiante> accion) {
-        preordenRec(raiz, accion);
-    }
-
-    private void preordenRec(Nodo actual, Consumer<Estudiante> accion) {
-        if (actual != null) {
-            accion.accept(actual.estudiante);
-            preordenRec(actual.izquierda, accion);
-            preordenRec(actual.derecha, accion);
-        }
-    }
-
-    public void postorden(Consumer<Estudiante> accion) {
-        postordenRec(raiz, accion);
-    }
-
-    private void postordenRec(Nodo actual, Consumer<Estudiante> accion) {
-        if (actual != null) {
-            postordenRec(actual.izquierda, accion);
-            postordenRec(actual.derecha, accion);
-            accion.accept(actual.estudiante);
         }
     }
 }

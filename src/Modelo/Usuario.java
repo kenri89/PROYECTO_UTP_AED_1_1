@@ -1,15 +1,12 @@
-// ================================
-// CLASE Usuario
-// Tema: Unidad 1 - Arreglo de Objetos
-// Uso: Estructura básica para almacenar usuarios con roles en un array
-// ================================
 package modelo;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.MoreObjects;
 
 public class Usuario {
     private String username;
     private String password;
     private String rol;
-    /** Carnet del estudiante en el sistema académico (null si no aplica). */
     private String carnet;
 
     public Usuario(String username, String password, String rol) {
@@ -17,9 +14,9 @@ public class Usuario {
     }
 
     public Usuario(String username, String password, String rol, String carnet) {
-        this.username = username;
-        this.password = password;
-        this.rol = rol;
+        this.username = checkNotNull(username, "Username no puede ser nulo");
+        this.password = checkNotNull(password, "Password no puede ser nulo");
+        this.rol = checkNotNull(rol, "Rol no puede ser nulo");
         this.carnet = carnet;
     }
 
@@ -37,5 +34,13 @@ public class Usuario {
 
     public String getCarnet() {
         return carnet;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("username", username)
+                .add("rol", rol)
+                .toString();
     }
 }

@@ -1,17 +1,16 @@
 package modelo;
 
-/**
- * Modelo de datos para representar una matrícula
- * Tema: Unidad 2 – Modelado y estructuras de datos
- */
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.MoreObjects;
+
 public class Matricula {
 
     private Estudiante estudiante;
     private Curso curso;
 
     public Matricula(Estudiante estudiante, Curso curso) {
-        this.estudiante = estudiante;
-        this.curso = curso;
+        this.estudiante = checkNotNull(estudiante, "El estudiante no puede ser nulo");
+        this.curso = checkNotNull(curso, "El curso no puede ser nulo");
     }
 
     public Estudiante getEstudiante() {
@@ -19,7 +18,7 @@ public class Matricula {
     }
 
     public void setEstudiante(Estudiante estudiante) {
-        this.estudiante = estudiante;
+        this.estudiante = checkNotNull(estudiante, "El estudiante no puede ser nulo");
     }
 
     public Curso getCurso() {
@@ -27,11 +26,14 @@ public class Matricula {
     }
 
     public void setCurso(Curso curso) {
-        this.curso = curso;
+        this.curso = checkNotNull(curso, "El curso no puede ser nulo");
     }
 
     @Override
     public String toString() {
-        return "Matrícula de " + estudiante.getNombre() + " al curso " + curso.getNombre();
+        return MoreObjects.toStringHelper(this)
+                .add("estudiante", estudiante.getNombre())
+                .add("curso", curso.getNombre())
+                .toString();
     }
 }

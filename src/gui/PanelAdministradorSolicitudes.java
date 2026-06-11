@@ -39,7 +39,8 @@ public class PanelAdministradorSolicitudes extends JPanel {
 
         JButton btnAtender = new JButton("Atender Siguiente");
         btnAtender.setBackground(new Color(0, 150, 100));
-        btnAtender.setForeground(Color.WHITE);
+        btnAtender.setForeground(Color.BLACK);
+        btnAtender.setBorder(BorderFactory.createRaisedBevelBorder());
         panelPendientes.add(btnAtender, BorderLayout.SOUTH);
 
         // --- Tabla de solicitudes atendidas ---

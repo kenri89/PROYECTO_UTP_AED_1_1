@@ -1,15 +1,18 @@
 package util;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class CuentasEstudiantes {
 
@@ -21,33 +24,34 @@ public final class CuentasEstudiantes {
     private CuentasEstudiantes() {
     }
 
-    private static Path archivo() {
-        return Paths.get(System.getProperty("user.home"), PersistenciaAcademica.DIR_NAME, ARCHIVO);
+    private static File archivo() {
+        return new File(new File(System.getProperty("user.home"), PersistenciaAcademica.DIR_NAME), ARCHIVO);
     }
 
     public static void registrarPorMatricula(String carnetRaw) {
-        String carnet = carnetRaw == null ? "" : carnetRaw.trim();
+        String carnet = Strings.nullToEmpty(carnetRaw).trim();
         if (carnet.isEmpty()) {
             return;
         }
-        Path f = archivo();
+        File f = archivo();
         try {
-            Files.createDirectories(f.getParent());
+            FileUtils.forceMkdir(f.getParentFile());
             Set<String> carnets = leerCarnets(f);
             if (carnets.contains(carnet)) {
                 return;
             }
             carnets.add(carnet);
-            escribirCarnets(f, carnets);
+            FileUtils.writeLines(f, StandardCharsets.UTF_8.name(), carnets);
         } catch (IOException e) {
             LOGGER.error("CuentasEstudiantes: no se pudo guardar cuenta", e);
         }
     }
 
-    private static Set<String> leerCarnets(Path f) throws IOException {
+    private static Set<String> leerCarnets(File f) throws IOException {
         Set<String> set = new LinkedHashSet<>();
-        if (Files.isRegularFile(f)) {
-            for (String linea : Files.readAllLines(f, StandardCharsets.UTF_8)) {
+        if (f.isFile()) {
+            List<String> lineas = FileUtils.readLines(f, StandardCharsets.UTF_8.name());
+            for (String linea : lineas) {
                 String c = linea.trim();
                 if (!c.isEmpty() && !c.startsWith("#")) {
                     set.add(c);
@@ -55,15 +59,6 @@ public final class CuentasEstudiantes {
             }
         }
         return set;
-    }
-
-    private static void escribirCarnets(Path f, Set<String> carnets) throws IOException {
-        try (BufferedWriter w = Files.newBufferedWriter(f, StandardCharsets.UTF_8)) {
-            for (String c : carnets) {
-                w.write(c);
-                w.newLine();
-            }
-        }
     }
 
     public static boolean autenticar(String usuario, String password) {
@@ -74,14 +69,14 @@ public final class CuentasEstudiantes {
         if (u.isEmpty()) {
             return false;
         }
-        Path f = archivo();
-        if (!Files.isRegularFile(f)) {
+        File f = archivo();
+        if (!f.isFile()) {
             return false;
         }
         try {
-            for (String linea : Files.readAllLines(f, StandardCharsets.UTF_8)) {
-                String c = linea.trim();
-                if (!c.isEmpty() && c.equals(u)) {
+            List<String> lineas = FileUtils.readLines(f, StandardCharsets.UTF_8.name());
+            for (String linea : lineas) {
+                if (linea.trim().equals(u)) {
                     return true;
                 }
             }

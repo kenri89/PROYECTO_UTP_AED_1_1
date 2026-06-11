@@ -1,5 +1,6 @@
 package gui;
 
+import com.google.common.base.Strings;
 import modelo.Solicitud;
 
 import javax.swing.*;
@@ -59,7 +60,8 @@ public class PanelSolicitudesEstudiante extends JPanel {
         panelBoton.setBackground(new Color(230, 245, 255)); // mismo fondo que el panel principal
         JButton btnEnviar = new JButton("Enviar Solicitud");
         btnEnviar.setBackground(new Color(40, 160, 100)); // color verde personalizado
-        btnEnviar.setForeground(Color.WHITE);
+        btnEnviar.setForeground(Color.BLACK);
+        btnEnviar.setBorder(BorderFactory.createRaisedBevelBorder());
         btnEnviar.setFont(new Font("Arial", Font.BOLD, 14));
         btnEnviar.setPreferredSize(new Dimension(180, 40)); // tamaño uniforme
         panelBoton.add(btnEnviar);
@@ -87,7 +89,7 @@ public class PanelSolicitudesEstudiante extends JPanel {
         String tipo = (String) comboTipo.getSelectedItem();
         String descripcion = txtDescripcion.getText().trim();
 
-        if (carnet.isEmpty() || descripcion.isEmpty()) {
+        if (Strings.isNullOrEmpty(carnet) || Strings.isNullOrEmpty(descripcion)) {
             JOptionPane.showMessageDialog(this, "⚠️ Por favor completa todos los campos.");
             return;
         }

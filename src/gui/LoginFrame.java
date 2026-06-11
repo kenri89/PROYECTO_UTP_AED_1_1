@@ -1,5 +1,6 @@
 package gui;
 
+import com.google.common.base.Strings;
 import modelo.Usuario;
 import util.CuentasEstudiantes;
 
@@ -39,7 +40,8 @@ public class LoginFrame extends JFrame {
 
         JButton btnLogin = new JButton("Ingresar");
         btnLogin.setBackground(new Color(0, 120, 215));
-        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setForeground(Color.BLACK);
+        btnLogin.setBorder(BorderFactory.createRaisedBevelBorder());
 
         JPanel panelBoton = new JPanel();
         panelBoton.setBackground(new Color(220, 235, 255));
@@ -50,7 +52,7 @@ public class LoginFrame extends JFrame {
             String user = txtUsuario.getText().trim();
             String pass = new String(txtPassword.getPassword()).trim();
 
-            if (user.isEmpty() || pass.isEmpty()) {
+            if (Strings.isNullOrEmpty(user) || Strings.isNullOrEmpty(pass)) {
                 JOptionPane.showMessageDialog(this, "Por favor, ingrese usuario y contraseña.");
                 return;
             }
