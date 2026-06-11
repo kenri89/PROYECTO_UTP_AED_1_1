@@ -1,6 +1,5 @@
 // Clase ListaCursos.java
 package estructuras;
-
 import modelo.Curso;
 
 public class ListaCursos {
