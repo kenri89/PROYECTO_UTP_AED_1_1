@@ -14,10 +14,16 @@ public class EstudianteDAO implements IEstudianteDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EstudianteDAO.class);
 
+    // SQL Queries
+    private static final String INSERT_SQL = "INSERT INTO Estudiantes (carnet, nombre, carrera) VALUES (?, ?, ?)";
+    private static final String SELECT_SQL = "SELECT carnet, nombre, carrera FROM Estudiantes";
+    private static final String UPDATE_SQL = "UPDATE Estudiantes SET nombre = ?, carrera = ? WHERE carnet = ?";
+    private static final String DELETE_SQL = "DELETE FROM Estudiantes WHERE carnet = ?";
+
+    @Override
     public boolean insertar(String carnet, String nombre, String carrera) {
-        String sql = "INSERT INTO Estudiantes (carnet, nombre, carrera) VALUES (?, ?, ?)";
         try (Connection cn = ConexionSQL.getConexion();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+             PreparedStatement ps = cn.prepareStatement(INSERT_SQL)) {
             ps.setString(1, carnet);
             ps.setString(2, nombre);
             ps.setString(3, carrera);
@@ -28,12 +34,13 @@ public class EstudianteDAO implements IEstudianteDAO {
         }
     }
 
+    @Override
     public List<String[]> listar() {
         List<String[]> lista = new ArrayList<>();
-        String sql = "SELECT carnet, nombre, carrera FROM Estudiantes";
         try (Connection cn = ConexionSQL.getConexion();
-             PreparedStatement ps = cn.prepareStatement(sql);
+             PreparedStatement ps = cn.prepareStatement(SELECT_SQL);
              ResultSet rs = ps.executeQuery()) {
+            
             while (rs.next()) {
                 String[] estudiante = new String[3];
                 estudiante[0] = rs.getString("carnet");
@@ -45,5 +52,31 @@ public class EstudianteDAO implements IEstudianteDAO {
             LOGGER.error("Error al listar estudiantes: {}", e.getMessage(), e);
         }
         return lista;
+    }
+
+    @Override
+    public boolean actualizar(String carnet, String nuevoNombre, String nuevaCarrera) {
+        try (Connection cn = ConexionSQL.getConexion();
+             PreparedStatement ps = cn.prepareStatement(UPDATE_SQL)) {
+            ps.setString(1, nuevoNombre);
+            ps.setString(2, nuevaCarrera);
+            ps.setString(3, carnet);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.error("Error al actualizar estudiante con carnet {}: {}", carnet, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean eliminar(String carnet) {
+        try (Connection cn = ConexionSQL.getConexion();
+             PreparedStatement ps = cn.prepareStatement(DELETE_SQL)) {
+            ps.setString(1, carnet);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.error("Error al eliminar estudiante con carnet {}: {}", carnet, e.getMessage(), e);
+            return false;
+        }
     }
 }

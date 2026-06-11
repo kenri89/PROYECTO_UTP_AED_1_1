@@ -12,7 +12,7 @@ import java.awt.event.*;
 
 /**
  * GUI para gestión de cursos.
- * Usa estructura de datos: Arreglo unidimensional, matriz y lista enlazada
+ * Usa estructuras de datos: Arreglo unidimensional, matriz y lista enlazada.
  */
 public class PanelCursos extends JPanel {
 
@@ -38,6 +38,7 @@ public class PanelCursos extends JPanel {
         agregarTabla();
         cargarDatosDesdeSQL();
     }
+
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(7, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos del Curso"));
@@ -67,10 +68,8 @@ public class PanelCursos extends JPanel {
 
         btnAgregar.setBackground(new Color(30, 120, 200));
         btnAgregar.setForeground(Color.WHITE);
-
         btnEliminar.setBackground(new Color(200, 60, 60));
         btnEliminar.setForeground(Color.WHITE);
-
         btnActualizar.setBackground(new Color(255, 165, 0));
         btnActualizar.setForeground(Color.WHITE);
 
@@ -96,7 +95,6 @@ public class PanelCursos extends JPanel {
             public void mousePressed(MouseEvent e) {
                 if (e.isPopupTrigger()) mostrarMenuContextual(e);
             }
-
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (e.isPopupTrigger()) mostrarMenuContextual(e);
@@ -110,12 +108,9 @@ public class PanelCursos extends JPanel {
         int fila = tablaCursos.rowAtPoint(e.getPoint());
         if (fila >= 0 && fila < tablaCursos.getRowCount()) {
             tablaCursos.setRowSelectionInterval(fila, fila);
-
             JPopupMenu menu = new JPopupMenu();
             JMenuItem itemActualizar = new JMenuItem("Actualizar");
-
             itemActualizar.addActionListener(ev -> cargarCursoSeleccionado());
-
             menu.add(itemActualizar);
             menu.show(e.getComponent(), e.getX(), e.getY());
         }
@@ -129,8 +124,7 @@ public class PanelCursos extends JPanel {
         txtNombre.setText(modeloTabla.getValueAt(fila, 1).toString());
         txtCreditos.setText(modeloTabla.getValueAt(fila, 2).toString());
         comboSemestre.setSelectedIndex(Integer.parseInt(modeloTabla.getValueAt(fila, 3).toString()) - 1);
-
-        txtCodigo.setEnabled(false); // Deshabilitar edición de código
+        txtCodigo.setEnabled(false);
     }
 
     private void insertarCurso() {
@@ -146,7 +140,6 @@ public class PanelCursos extends JPanel {
 
         int creditos;
         try {
-            box_creditos:
             creditos = Integer.parseInt(creditosStr);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Los créditos deben ser un número.");
@@ -154,9 +147,7 @@ public class PanelCursos extends JPanel {
         }
 
         dao.CursoDAO cursoDAO = new dao.CursoDAO();
-        boolean exitoSQL = cursoDAO.insertar(codigo, nombre, semestre);
-
-        if (exitoSQL) {
+        if (cursoDAO.insertar(codigo, nombre, semestre)) {
             Curso nuevo = new Curso(codigo, nombre, creditos, semestre);
             arregloCursos.insertar(nuevo);
             matrizSemestres.insertarPorSemestre(nuevo);
@@ -178,25 +169,26 @@ public class PanelCursos extends JPanel {
         }
 
         String codigo = modeloTabla.getValueAt(fila, 0).toString();
-        int opcion = JOptionPane.showConfirmDialog(this, "¿Deseas eliminar el curso con código " + codigo + "?",
+        int opcion = JOptionPane.showConfirmDialog(this, "¿Deseas eliminar el curso con código " + codigo + "?", 
                 "Confirmación", JOptionPane.YES_NO_OPTION);
-        if (opcion != JOptionPane.YES_OPTION) return;
-
-        boolean eliminadoArreglo = arregloCursos.eliminarPorCodigo(codigo);
-        boolean eliminadoMatriz = false;
-        for (int i = 1; i <= 10; i++) {
-            if (matrizSemestres.eliminarPorCodigo(codigo, i)) {
-                eliminadoMatriz = true;
-                break;
+        
+        if (opcion == JOptionPane.YES_OPTION) {
+            boolean eliminadoArreglo = arregloCursos.eliminarPorCodigo(codigo);
+            boolean eliminadoMatriz = false;
+            for (int i = 1; i <= 10; i++) {
+                if (matrizSemestres.eliminarPorCodigo(codigo, i)) {
+                    eliminadoMatriz = true;
+                    break;
+                }
             }
-        }
-        boolean eliminadoLista = listaCursos.eliminarPorCodigo(codigo);
+            boolean eliminadoLista = listaCursos.eliminarPorCodigo(codigo);
 
-        if (eliminadoArreglo || eliminadoMatriz || eliminadoLista) {
-            JOptionPane.showMessageDialog(this, "Curso eliminado correctamente.");
-            cargarTabla();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se encontró el curso.");
+            if (eliminadoArreglo || eliminadoMatriz || eliminadoLista) {
+                JOptionPane.showMessageDialog(this, "Curso eliminado correctamente.");
+                cargarTabla();
+            } else {
+                JOptionPane.showMessageDialog(this, "No se encontró el curso.");
+            }
         }
     }
 
@@ -211,9 +203,9 @@ public class PanelCursos extends JPanel {
             return;
         }
 
-        int opcion = JOptionPane.showConfirmDialog(this,
-                "¿Deseas actualizar este curso?", "Confirmación", JOptionPane.YES_NO_OPTION);
-        if (opcion != JOptionPane.YES_OPTION) return;
+        if (JOptionPane.showConfirmDialog(this, "¿Deseas actualizar este curso?", "Confirmación", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+            return;
+        }
 
         try {
             int creditos = Integer.parseInt(creditosStr);
@@ -239,10 +231,7 @@ public class PanelCursos extends JPanel {
     private void cargarTabla() {
         modeloTabla.setRowCount(0);
         for (Curso curso : arregloCursos.obtenerCursos()) {
-            modeloTabla.addRow(new Object[]{
-                    curso.getCodigo(), curso.getNombre(),
-                    curso.getCreditos(), curso.getSemestre()
-            });
+            modeloTabla.addRow(new Object[]{curso.getCodigo(), curso.getNombre(), curso.getCreditos(), curso.getSemestre()});
         }
     }
 
@@ -253,22 +242,23 @@ public class PanelCursos extends JPanel {
         comboSemestre.setSelectedIndex(0);
         txtCodigo.setEnabled(true);
     }
+
     private void cargarDatosDesdeSQL() {
         dao.CursoDAO cursoDAO = new dao.CursoDAO();
         java.util.List<String[]> cursosSQL = cursoDAO.listar();
 
-        for (String[] datos : cursosSQL) {
-            String codigo = datos[0];
-            String nombre = datos[1];
-            int semestre = Integer.parseInt(datos[2]);
-            int creditosPredeterminados = 4;
+        if (!cursosSQL.isEmpty()) {
+            arregloCursos.limpiar();
+            matrizSemestres.limpiar();
+            listaCursos.limpiar();
+        }
 
-            Curso curso = new Curso(codigo, nombre, creditosPredeterminados, semestre);
+        for (String[] datos : cursosSQL) {
+            Curso curso = new Curso(datos[0], datos[1], 4, Integer.parseInt(datos[2]));
             arregloCursos.insertar(curso);
             matrizSemestres.insertarPorSemestre(curso);
             listaCursos.insertar(curso);
         }
-
         cargarTabla();
     }
 }

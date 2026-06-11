@@ -2,6 +2,7 @@ package gui;
 
 import estructuras.ArbolEstudiantes;
 import modelo.Estudiante;
+import dao.EstudianteDAO;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,7 +11,7 @@ import java.awt.event.*;
 
 /**
  * GUI para gestión de estudiantes.
- * Tema: Unidad 3 – Árbol Binario de Búsqueda (ABB)
+ * Tema: Unidad 3 – Árbol Binario de Búsqueda (ABB) Sincronizado con SQL Server
  */
 public class PanelEstudiantes extends JPanel {
 
@@ -19,7 +20,6 @@ public class PanelEstudiantes extends JPanel {
     private DefaultTableModel modelo;
     private JTextField txtCarnet, txtNombre;
     private JComboBox<String> comboCarrera;
-
     private String carnetSeleccionado = null;
 
     public PanelEstudiantes(ArbolEstudiantes arbol) {
@@ -29,7 +29,7 @@ public class PanelEstudiantes extends JPanel {
 
         agregarFormulario();
         agregarTabla();
-        cargarDatosDesdeSQL(); 
+        cargarDatosDesdeSQL();
     }
 
     private void agregarFormulario() {
@@ -89,7 +89,9 @@ public class PanelEstudiantes extends JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 int fila = tabla.rowAtPoint(e.getPoint());
-                tabla.getSelectionModel().setSelectionInterval(fila, fila);
+                if (fila >= 0) {
+                    tabla.getSelectionModel().setSelectionInterval(fila, fila);
+                }
             }
         });
 
@@ -98,6 +100,7 @@ public class PanelEstudiantes extends JPanel {
             if (fila >= 0) {
                 carnetSeleccionado = (String) modelo.getValueAt(fila, 0);
                 txtCarnet.setText((String) modelo.getValueAt(fila, 0));
+                txtCarnet.setEditable(false);
                 txtNombre.setText((String) modelo.getValueAt(fila, 1));
                 comboCarrera.setSelectedItem((String) modelo.getValueAt(fila, 2));
             }
@@ -108,10 +111,9 @@ public class PanelEstudiantes extends JPanel {
         JPanel panelTabla = new JPanel(new BorderLayout());
         panelTabla.add(scrollPane, BorderLayout.CENTER);
 
-        // 🔁 Panel de botones de recorrido
         JPanel panelRecorridos = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         panelRecorridos.setBackground(new Color(230, 245, 255));
-
+        
         JButton btnInorden = new JButton("Inorden");
         JButton btnPreorden = new JButton("Preorden");
         JButton btnPostorden = new JButton("Postorden");
@@ -125,7 +127,6 @@ public class PanelEstudiantes extends JPanel {
             panelRecorridos.add(b);
         }
 
-        // Acciones: modificar la tabla directamente
         btnInorden.addActionListener(e -> cargarRecorrido("inorden"));
         btnPreorden.addActionListener(e -> cargarRecorrido("preorden"));
         btnPostorden.addActionListener(e -> cargarRecorrido("postorden"));
@@ -144,25 +145,23 @@ public class PanelEstudiantes extends JPanel {
             return;
         }
 
-        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        EstudianteDAO estudianteDAO = new EstudianteDAO();
         boolean exitoSQL = estudianteDAO.insertar(carnet, nombre, carrera);
 
         if (exitoSQL) {
             Estudiante estudiante = new Estudiante(carnet, nombre, carrera);
             arbol.insertar(estudiante);
-            
             JOptionPane.showMessageDialog(this, "Estudiante registrado con éxito.");
-            
             cargarRecorrido("inorden");
             limpiarCampos();
         } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error al registrar en BD o carnet duplicado.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void actualizarEstudiante() {
         if (carnetSeleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Debes seleccionar un estudiante desde el menú contextual.");
+            JOptionPane.showMessageDialog(this, "Debes seleccionar un estudiante desde la tabla.");
             return;
         }
 
@@ -176,10 +175,15 @@ public class PanelEstudiantes extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(this, "¿Deseas actualizar este estudiante?", "Confirmar actualización", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            arbol.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera);
-            cargarRecorrido("inorden");
-            limpiarCampos();
-            carnetSeleccionado = null;
+            EstudianteDAO estudianteDAO = new EstudianteDAO();
+            if (estudianteDAO.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera)) {
+                arbol.actualizar(carnetSeleccionado, nuevoNombre, nuevaCarrera);
+                JOptionPane.showMessageDialog(this, "Estudiante actualizado con éxito.");
+                cargarRecorrido("inorden");
+                limpiarCampos();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al actualizar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -188,10 +192,20 @@ public class PanelEstudiantes extends JPanel {
         if (fila >= 0) {
             String carnet = (String) modelo.getValueAt(fila, 0);
             int confirm = JOptionPane.showConfirmDialog(this, "¿Deseas eliminar al estudiante con carnet: " + carnet + "?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            
             if (confirm == JOptionPane.YES_OPTION) {
-                arbol.eliminar(carnet);
-                cargarRecorrido("inorden");
+                EstudianteDAO estudianteDAO = new EstudianteDAO();
+                if (estudianteDAO.eliminar(carnet)) {
+                    arbol.eliminar(carnet);
+                    JOptionPane.showMessageDialog(this, "Estudiante eliminado con éxito.");
+                    cargarRecorrido("inorden");
+                    limpiarCampos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al eliminar de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecciona una fila de la tabla para eliminar.");
         }
     }
 
@@ -209,41 +223,29 @@ public class PanelEstudiantes extends JPanel {
 
     private void cargarRecorrido(String tipo) {
         modelo.setRowCount(0);
-
         switch (tipo.toLowerCase()) {
-            case "inorden":
-                arbol.inorden(est -> modelo.addRow(new Object[]{
-                        est.getCarnet(), est.getNombre(), est.getCarrera()
-                }));
-                break;
-            case "preorden":
-                arbol.preorden(est -> modelo.addRow(new Object[]{
-                        est.getCarnet(), est.getNombre(), est.getCarrera()
-                }));
-                break;
-            case "postorden":
-                arbol.postorden(est -> modelo.addRow(new Object[]{
-                        est.getCarnet(), est.getNombre(), est.getCarrera()
-                }));
-                break;
+            case "inorden" -> arbol.inorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
+            case "preorden" -> arbol.preorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
+            case "postorden" -> arbol.postorden(est -> modelo.addRow(new Object[]{est.getCarnet(), est.getNombre(), est.getCarrera()}));
         }
     }
 
     private void limpiarCampos() {
         txtCarnet.setText("");
+        txtCarnet.setEditable(true);
         txtNombre.setText("");
         comboCarrera.setSelectedIndex(0);
+        carnetSeleccionado = null;
     }
 
     private void cargarDatosDesdeSQL() {
-        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        EstudianteDAO estudianteDAO = new EstudianteDAO();
         java.util.List<String[]> estudiantesSQL = estudianteDAO.listar();
 
         for (String[] datos : estudiantesSQL) {
             Estudiante estudiante = new Estudiante(datos[0], datos[1], datos[2]);
             arbol.insertar(estudiante);
         }
-
         cargarRecorrido("inorden");
     }
 }
