@@ -21,10 +21,10 @@ public class PanelAdministradorSolicitudes extends JPanel {
         this.solicitudesAtendidas = new LinkedList<>();
 
         setLayout(new BorderLayout());
-        setBackground(new Color(240, 250, 255));
+        setBackground(UIConstants.PANEL_BG);
 
         JLabel lblTitulo = new JLabel("Gestión de Solicitudes", JLabel.CENTER);
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setFont(UIConstants.FONT_TITLE);
         add(lblTitulo, BorderLayout.NORTH);
 
         // --- Tabla de solicitudes pendientes ---
@@ -37,10 +37,7 @@ public class PanelAdministradorSolicitudes extends JPanel {
         panelPendientes.setBorder(BorderFactory.createTitledBorder("Solicitudes Pendientes"));
         panelPendientes.add(new JScrollPane(tablaPendientes), BorderLayout.CENTER);
 
-        JButton btnAtender = new JButton("Atender Siguiente");
-        btnAtender.setBackground(new Color(0, 150, 100));
-        btnAtender.setForeground(Color.BLACK);
-        btnAtender.setBorder(BorderFactory.createRaisedBevelBorder());
+        JButton btnAtender = UIConstants.crearBoton("Atender Siguiente");
         panelPendientes.add(btnAtender, BorderLayout.SOUTH);
 
         // --- Tabla de solicitudes atendidas ---

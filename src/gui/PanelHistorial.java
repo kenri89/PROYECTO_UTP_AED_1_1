@@ -30,7 +30,7 @@ public class PanelHistorial extends JPanel {
         this.carnets = carnets;
 
         setLayout(new BorderLayout());
-        setBackground(new Color(245, 245, 255)); // Fondo claro
+        setBackground(UIConstants.PANEL_BG);
 
         agregarFiltroCarnets();   // Filtro por estudiante
         agregarTablaHistorial(); // Tabla con historial
@@ -39,7 +39,7 @@ public class PanelHistorial extends JPanel {
     private void agregarFiltroCarnets() {
         JPanel panelFiltro = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelFiltro.setBorder(BorderFactory.createTitledBorder("Filtrar por Estudiante"));
-        panelFiltro.setBackground(new Color(230, 240, 255));
+        panelFiltro.setBackground(UIConstants.PANEL_BG);
 
         comboCarnets = new JComboBox<>();
         comboCarnets.addItem("Todos"); // Filtro global
@@ -48,7 +48,7 @@ public class PanelHistorial extends JPanel {
             comboCarnets.addItem(c);
         }
 
-        JButton btnFiltrar = new JButton("Filtrar");
+        JButton btnFiltrar = UIConstants.crearBoton("Filtrar");
         btnFiltrar.addActionListener(e -> cargarHistorial());
 
         panelFiltro.add(new JLabel("Carnet:"));

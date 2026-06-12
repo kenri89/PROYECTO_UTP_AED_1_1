@@ -17,9 +17,9 @@ public class Main {
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException e) {
             LOGGER.warn("Error al establecer Metal LAF", e);
         }
-        javax.swing.UIManager.put("Button.foreground", Color.BLACK);
-        javax.swing.UIManager.put("Button.background", new Color(0, 120, 215));
-        javax.swing.UIManager.put("Button.select", new Color(0, 100, 190));
+        javax.swing.UIManager.put("Button.foreground", Color.WHITE);
+        javax.swing.UIManager.put("Button.background", UIConstants.AZUL_MEDIO);
+        javax.swing.UIManager.put("Button.select", UIConstants.AZUL_OSCURO);
         java.awt.EventQueue.invokeLater(() -> {
             LOGGER.info("Ventana de login abierta");
             new LoginFrame().setVisible(true);

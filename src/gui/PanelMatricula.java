@@ -39,7 +39,7 @@ public class PanelMatricula extends JPanel {
         this.pilaHistorial = pilaHistorial;
 
         setLayout(new BorderLayout());
-        setBackground(new Color(230, 240, 255));
+        setBackground(UIConstants.PANEL_BG);
 
         agregarFormulario();
         agregarTabla();
@@ -54,7 +54,7 @@ public class PanelMatricula extends JPanel {
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(5, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos de Matrícula"));
-        panelForm.setBackground(new Color(210, 230, 255));
+        panelForm.setBackground(UIConstants.PANEL_LIGHT);
 
         comboCarnet = new JComboBox<>();
         comboCodigoCurso = new JComboBox<>();
@@ -64,23 +64,10 @@ public class PanelMatricula extends JPanel {
         panelForm.add(new JLabel("Código Curso:"));
         panelForm.add(comboCodigoCurso);
 
-        JButton btnRegistrar = new JButton("Registrar");
-        JButton btnActualizar = new JButton("Actualizar");
-        JButton btnVer = new JButton("Ver Matrículas");
-        JButton btnDeshacer = new JButton("Deshacer");
-
-        btnRegistrar.setBackground(new Color(0, 140, 200));
-        btnRegistrar.setForeground(Color.BLACK);
-        btnRegistrar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnActualizar.setBackground(new Color(0, 170, 100));
-        btnActualizar.setForeground(Color.BLACK);
-        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnVer.setBackground(new Color(120, 100, 200));
-        btnVer.setForeground(Color.BLACK);
-        btnVer.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnDeshacer.setBackground(new Color(200, 80, 80));
-        btnDeshacer.setForeground(Color.BLACK);
-        btnDeshacer.setBorder(BorderFactory.createRaisedBevelBorder());
+        JButton btnRegistrar = UIConstants.crearBoton("Registrar");
+        JButton btnActualizar = UIConstants.crearBoton("Actualizar");
+        JButton btnVer = UIConstants.crearBoton("Ver Matrículas");
+        JButton btnDeshacer = UIConstants.crearBoton("Deshacer");
 
         panelForm.add(btnRegistrar);
         panelForm.add(btnActualizar);
@@ -133,12 +120,8 @@ public class PanelMatricula extends JPanel {
 
         JToolBar barraExport = new JToolBar();
         barraExport.setFloatable(false);
-        barraExport.setBackground(new Color(200, 225, 255));
-        JButton btnExportar = new JButton("Exportar a Excel");
-        btnExportar.setBackground(new Color(0, 150, 50));
-        btnExportar.setForeground(Color.BLACK);
-        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnExportar.setFont(new Font("Arial", Font.BOLD, 14));
+        barraExport.setBackground(UIConstants.PANEL_HEADER);
+        JButton btnExportar = UIConstants.crearBoton("Exportar a Excel");
         btnExportar.addActionListener(e -> exportarExcel());
         barraExport.add(Box.createHorizontalGlue());
         barraExport.add(btnExportar);

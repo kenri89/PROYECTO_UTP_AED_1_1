@@ -27,7 +27,7 @@ public class PanelMisMatriculas extends JPanel {
         this.arbolEstudiantes = arbolEstudiantes;
 
         setLayout(new BorderLayout(10, 10));
-        setBackground(new Color(230, 240, 255));
+        setBackground(UIConstants.PANEL_BG);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         String tituloCarnet = this.carnet.isEmpty() ? "(sin carnet asignado)" : this.carnet;
@@ -40,8 +40,8 @@ public class PanelMisMatriculas extends JPanel {
         JLabel lblEncabezado = new JLabel("<html><div style='text-align:center;'>"
                 + "<b>Mis cursos matriculados</b><br/>"
                 + subtitulo + "</div></html>", JLabel.CENTER);
-        lblEncabezado.setFont(new Font("Arial", Font.PLAIN, 14));
-        lblEncabezado.setForeground(new Color(0, 70, 140));
+        lblEncabezado.setFont(UIConstants.FONT_LABEL);
+        lblEncabezado.setForeground(UIConstants.TEXT_BLUE);
         add(lblEncabezado, BorderLayout.NORTH);
 
         modelo = new DefaultTableModel(new Object[]{"Código", "Curso", "Créditos", "Semestre"}, 0) {
@@ -54,15 +54,8 @@ public class PanelMisMatriculas extends JPanel {
         tabla.setRowHeight(22);
         add(new JScrollPane(tabla), BorderLayout.CENTER);
 
-        JButton btnActualizar = new JButton("Actualizar lista");
-        btnActualizar.setBackground(new Color(0, 120, 215));
-        btnActualizar.setForeground(Color.BLACK);
-        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
-
-        JButton btnExportar = new JButton("Descargar reporte");
-        btnExportar.setBackground(new Color(0, 150, 50));
-        btnExportar.setForeground(Color.BLACK);
-        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
+        JButton btnActualizar = UIConstants.crearBoton("Actualizar lista");
+        JButton btnExportar = UIConstants.crearBoton("Descargar reporte");
 
         JPanel sur = new JPanel();
         sur.setOpaque(false);

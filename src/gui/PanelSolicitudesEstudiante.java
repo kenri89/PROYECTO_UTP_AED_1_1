@@ -18,24 +18,21 @@ public class PanelSolicitudesEstudiante extends JPanel {
         this.colaSolicitudes = colaSolicitudes;
 
         setLayout(new BorderLayout(20, 20));
-        setBackground(new Color(225, 240, 255));
-        setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50)); // margen general
+        setBackground(UIConstants.PANEL_BG);
+        setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Panel del formulario
         JPanel panelFormulario = new JPanel();
         panelFormulario.setLayout(new BoxLayout(panelFormulario, BoxLayout.Y_AXIS));
-        panelFormulario.setBackground(new Color(245, 250, 255));
+        panelFormulario.setBackground(UIConstants.PANEL_FORM);
         panelFormulario.setBorder(BorderFactory.createTitledBorder("📄 Nueva Solicitud del Estudiante"));
 
-        // Carnet
         JLabel lblCarnet = new JLabel("Carnet del estudiante:");
-        lblCarnet.setFont(new Font("Arial", Font.BOLD, 14));
+        lblCarnet.setFont(UIConstants.FONT_BUTTON);
         txtCarnet = new JTextField(20);
         txtCarnet.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
-        // Tipo de solicitud
         JLabel lblTipo = new JLabel("Tipo de solicitud:");
-        lblTipo.setFont(new Font("Arial", Font.BOLD, 14));
+        lblTipo.setFont(UIConstants.FONT_BUTTON);
         comboTipo = new JComboBox<>(new String[]{
                 "Certificado de matrícula",
                 "Constancia de estudiante activo",
@@ -46,24 +43,18 @@ public class PanelSolicitudesEstudiante extends JPanel {
         });
         comboTipo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
-        // Descripción
         JLabel lblDescripcion = new JLabel("Descripción:");
-        lblDescripcion.setFont(new Font("Arial", Font.BOLD, 14));
+        lblDescripcion.setFont(UIConstants.FONT_BUTTON);
         txtDescripcion = new JTextArea(20, 20);
         txtDescripcion.setLineWrap(true);
         txtDescripcion.setWrapStyleWord(true);
         JScrollPane scrollDescripcion = new JScrollPane(txtDescripcion);
         scrollDescripcion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-        // Botón enviar
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panelBoton.setBackground(new Color(230, 245, 255)); // mismo fondo que el panel principal
-        JButton btnEnviar = new JButton("Enviar Solicitud");
-        btnEnviar.setBackground(new Color(40, 160, 100)); // color verde personalizado
-        btnEnviar.setForeground(Color.BLACK);
-        btnEnviar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnEnviar.setFont(new Font("Arial", Font.BOLD, 14));
-        btnEnviar.setPreferredSize(new Dimension(180, 40)); // tamaño uniforme
+        panelBoton.setBackground(UIConstants.PANEL_BG);
+        JButton btnEnviar = UIConstants.crearBoton("Enviar Solicitud");
+        btnEnviar.setPreferredSize(new Dimension(180, 40));
         panelBoton.add(btnEnviar);
 
         // Añadir componentes al panel

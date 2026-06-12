@@ -26,14 +26,13 @@ public class MenuPrincipal extends JFrame {
     private MatrizSemestres matrizSemestres;
     private ArbolEstudiantes arbolEstudiantes;
     private ListaMatricula listaMatricula;
-    private final PilaAcciones_U3 pilaHistorial = new PilaAcciones_U3(); // única pila
+    private final PilaAcciones_U3 pilaHistorial = new PilaAcciones_U3();
 
-    private Queue<Solicitud> colaSolicitudes = new LinkedList<>(); // COLA para solicitudes
+    private Queue<Solicitud> colaSolicitudes = new LinkedList<>();
 
     public MenuPrincipal(Usuario usuario) {
         this.usuarioActual = usuario;
 
-        // Estructuras de datos
         arregloCursos = new ArregloCursos();
         matrizSemestres = new MatrizSemestres();
         listaCursos = new ListaCursos();
@@ -48,43 +47,33 @@ public class MenuPrincipal extends JFrame {
         });
         setLayout(new BorderLayout());
 
-        Color azulFondo = new Color(220, 240, 255);
-        Color azulBoton = new Color(0, 120, 215);
-        Color azulTexto = new Color(0, 80, 160);
-        getContentPane().setBackground(azulFondo);
+        getContentPane().setBackground(UIConstants.PANEL_BG);
 
         JLabel lblBienvenida = new JLabel("Usuario: " + usuarioActual.getUsername() + " | Rol: " + usuarioActual.getRol(), JLabel.CENTER);
-        lblBienvenida.setFont(new Font("Arial", Font.BOLD, 18));
-        lblBienvenida.setForeground(azulTexto);
+        lblBienvenida.setFont(UIConstants.FONT_HEADER);
+        lblBienvenida.setForeground(UIConstants.TEXT_BLUE);
         lblBienvenida.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
         add(lblBienvenida, BorderLayout.NORTH);
 
         JPanel panelBotones = new JPanel(new GridLayout(8, 1, 10, 10));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-        panelBotones.setBackground(new Color(200, 225, 255));
+        panelBotones.setBackground(UIConstants.PANEL_HEADER);
 
-        JButton btnCursos = new JButton("Gestión de Cursos");
-        JButton btnEstudiantes = new JButton("Gestión de Estudiantes");
-        JButton btnMatricula = new JButton("Matrícula");
-        JButton btnHistorial = new JButton("Historial Académico");
-        JButton btnSolicitudes = new JButton("Solicitudes");
-        JButton btnMisMatriculas = new JButton("Mis cursos matriculados");
-        JButton btnAtenderSolicitudes = new JButton("Atender Solicitudes (Admin)");
-        JButton btnSalir = new JButton("Salir");
+        JButton btnCursos = UIConstants.crearBoton("Gestión de Cursos");
+        JButton btnEstudiantes = UIConstants.crearBoton("Gestión de Estudiantes");
+        JButton btnMatricula = UIConstants.crearBoton("Matrícula");
+        JButton btnHistorial = UIConstants.crearBoton("Historial Académico");
+        JButton btnSolicitudes = UIConstants.crearBoton("Solicitudes");
+        JButton btnMisMatriculas = UIConstants.crearBoton("Mis cursos matriculados");
+        JButton btnAtenderSolicitudes = UIConstants.crearBoton("Atender Solicitudes (Admin)");
+        JButton btnSalir = UIConstants.crearBoton("Salir");
 
-        // Restricciones por rol (visibilidad de opciones)
-        // Nota: se normaliza para soportar "Secretaría"/"Secretaria" y "Administrador"/"Admin"
         String rol = usuarioActual.getRol() == null ? "" : usuarioActual.getRol().trim().toLowerCase();
         boolean esAdmin = rol.equals("admin") || rol.equals("administrador");
         boolean esSecretaria = rol.equals("secretaría") || rol.equals("secretaria");
         boolean esEstudiante = rol.equals("estudiante");
         boolean esDocente = rol.equals("docente");
 
-        // Política actual (ajústala si tu proyecto lo requiere):
-        // - Admin: todo
-        // - Secretaría: cursos, estudiantes, matrícula, solicitudes (ver)
-        // - Estudiante: historial, solicitudes, mis matrículas (crear/ver)
-        // - Docente: historial (ver) (por ahora)
         btnCursos.setVisible(esAdmin || esSecretaria);
         btnEstudiantes.setVisible(esAdmin || esSecretaria);
         btnMatricula.setVisible(esAdmin || esSecretaria);
@@ -99,18 +88,14 @@ public class MenuPrincipal extends JFrame {
         };
 
         for (JButton btn : botones) {
-            btn.setBackground(azulBoton);
-            btn.setForeground(Color.BLACK);
-            btn.setFont(new Font("Arial", Font.BOLD, 14));
-            btn.setPreferredSize(new Dimension(200, 50));
-            btn.setBorder(BorderFactory.createRaisedBevelBorder());
+            btn.setPreferredSize(UIConstants.BUTTON_SIZE);
             panelBotones.add(btn);
         }
 
         add(panelBotones, BorderLayout.WEST);
 
         panelContenido = new JPanel(new BorderLayout());
-        panelContenido.setBackground(azulFondo);
+        panelContenido.setBackground(UIConstants.PANEL_BG);
         panelContenido.add(new JLabel("Bienvenido al sistema académico", JLabel.CENTER), BorderLayout.CENTER);
         add(panelContenido, BorderLayout.CENTER);
 

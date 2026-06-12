@@ -24,7 +24,7 @@ public class PanelEstudiantes extends JPanel {
     public PanelEstudiantes(ArbolEstudiantes arbol) {
         this.arbol = arbol;
         setLayout(new BorderLayout());
-        setBackground(new Color(230, 245, 255));
+        setBackground(UIConstants.PANEL_BG);
 
         agregarFormulario();
         agregarTabla();
@@ -38,7 +38,7 @@ public class PanelEstudiantes extends JPanel {
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(5, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos del Estudiante"));
-        panelForm.setBackground(new Color(220, 230, 255));
+        panelForm.setBackground(UIConstants.PANEL_FORM);
 
         txtCarnet = new JTextField();
         txtNombre = new JTextField();
@@ -51,19 +51,9 @@ public class PanelEstudiantes extends JPanel {
         panelForm.add(new JLabel("Carrera:"));
         panelForm.add(comboCarrera);
 
-        JButton btnAgregar = new JButton("Registrar");
-        JButton btnActualizar = new JButton("Actualizar");
-        JButton btnBuscar = new JButton("Buscar por carnet");
-
-        btnAgregar.setBackground(new Color(30, 120, 200));
-        btnAgregar.setForeground(Color.BLACK);
-        btnAgregar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnActualizar.setBackground(new Color(60, 150, 80));
-        btnActualizar.setForeground(Color.BLACK);
-        btnActualizar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnBuscar.setBackground(new Color(120, 120, 200));
-        btnBuscar.setForeground(Color.BLACK);
-        btnBuscar.setBorder(BorderFactory.createRaisedBevelBorder());
+        JButton btnAgregar = UIConstants.crearBoton("Registrar");
+        JButton btnActualizar = UIConstants.crearBoton("Actualizar");
+        JButton btnBuscar = UIConstants.crearBoton("Buscar por carnet");
 
         panelForm.add(btnAgregar);
         panelForm.add(btnActualizar);
@@ -116,13 +106,9 @@ public class PanelEstudiantes extends JPanel {
 
         JToolBar barraExport = new JToolBar();
         barraExport.setFloatable(false);
-        barraExport.setBackground(new Color(220, 235, 255));
+        barraExport.setBackground(UIConstants.PANEL_BG);
 
-        JButton btnExportar = new JButton("Exportar a Excel");
-        btnExportar.setBackground(new Color(0, 150, 50));
-        btnExportar.setForeground(Color.BLACK);
-        btnExportar.setBorder(BorderFactory.createRaisedBevelBorder());
-        btnExportar.setFont(new Font("Arial", Font.BOLD, 14));
+        JButton btnExportar = UIConstants.crearBoton("Exportar a Excel");
         btnExportar.addActionListener(e -> exportarExcel());
         barraExport.add(Box.createHorizontalGlue());
         barraExport.add(btnExportar);
