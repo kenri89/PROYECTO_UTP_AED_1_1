@@ -1,73 +1,58 @@
 package gui;
 
 import modelo.Usuario;
-import modelo.Solicitud;
-import estructuras.ListaCursos;
-import estructuras.ArregloCursos;
-import estructuras.MatrizSemestres;
-import estructuras.ArbolEstudiantes;
-import estructuras.ListaMatricula;
-import estructuras.PilaAcciones_U3;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 
 public class MenuPrincipal extends JFrame {
 
     private JPanel panelContenido;
     private Usuario usuarioActual;
 
-    private ListaCursos listaCursos;
-    private ArregloCursos arregloCursos;
-    private MatrizSemestres matrizSemestres;
-    private ArbolEstudiantes arbolEstudiantes;
-    private ListaMatricula listaMatricula;
-    private final PilaAcciones_U3 pilaHistorial = new PilaAcciones_U3();
-
-    private Queue<Solicitud> colaSolicitudes = new LinkedList<>();
+    // Declaramos los botones como atributos para poder exponerlos
+    private JButton btnCursos;
+    private JButton btnEstudiantes;
+    private JButton btnMatricula;
+    private JButton btnHistorial;
+    private JButton btnSolicitudes;
+    private JButton btnMisMatriculas;
+    private JButton btnAtenderSolicitudes;
+    private JButton btnSalir;
 
     public MenuPrincipal(Usuario usuario) {
         this.usuarioActual = usuario;
-
-        arregloCursos = new ArregloCursos();
-        matrizSemestres = new MatrizSemestres();
-        listaCursos = new ListaCursos();
-        arbolEstudiantes = new ArbolEstudiantes();
-        listaMatricula = new ListaMatricula();
 
         setTitle("Sistema Académico - Rol: " + usuarioActual.getRol());
         setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-        });
         setLayout(new BorderLayout());
-
+        setVisible(true);
         getContentPane().setBackground(UIConstants.PANEL_BG);
 
+        // Cabecera de bienvenida
         JLabel lblBienvenida = new JLabel("Usuario: " + usuarioActual.getUsername() + " | Rol: " + usuarioActual.getRol(), JLabel.CENTER);
         lblBienvenida.setFont(UIConstants.FONT_HEADER);
         lblBienvenida.setForeground(UIConstants.TEXT_BLUE);
         lblBienvenida.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
         add(lblBienvenida, BorderLayout.NORTH);
 
+        // Panel de botones (Menú lateral)
         JPanel panelBotones = new JPanel(new GridLayout(8, 1, 10, 10));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
         panelBotones.setBackground(UIConstants.PANEL_HEADER);
 
-        JButton btnCursos = UIConstants.crearBoton("Gestión de Cursos");
-        JButton btnEstudiantes = UIConstants.crearBoton("Gestión de Estudiantes");
-        JButton btnMatricula = UIConstants.crearBoton("Matrícula");
-        JButton btnHistorial = UIConstants.crearBoton("Historial Académico");
-        JButton btnSolicitudes = UIConstants.crearBoton("Solicitudes");
-        JButton btnMisMatriculas = UIConstants.crearBoton("Mis cursos matriculados");
-        JButton btnAtenderSolicitudes = UIConstants.crearBoton("Atender Solicitudes (Admin)");
-        JButton btnSalir = UIConstants.crearBoton("Salir");
+        btnCursos = UIConstants.crearBoton("Gestión de Cursos");
+        btnEstudiantes = UIConstants.crearBoton("Gestión de Estudiantes");
+        btnMatricula = UIConstants.crearBoton("Matrícula");
+        btnHistorial = UIConstants.crearBoton("Historial Académico");
+        btnSolicitudes = UIConstants.crearBoton("Solicitudes");
+        btnMisMatriculas = UIConstants.crearBoton("Mis cursos matriculados");
+        btnAtenderSolicitudes = UIConstants.crearBoton("Atender Solicitudes (Admin)");
+        btnSalir = UIConstants.crearBoton("Salir");
 
+        // Lógica visual de permisos (Esto se queda en la vista porque es visual)
         String rol = usuarioActual.getRol() == null ? "" : usuarioActual.getRol().trim().toLowerCase();
         boolean esAdmin = rol.equals("admin") || rol.equals("administrador");
         boolean esSecretaria = rol.equals("secretaría") || rol.equals("secretaria");
@@ -94,81 +79,32 @@ public class MenuPrincipal extends JFrame {
 
         add(panelBotones, BorderLayout.WEST);
 
+        // Área central de contenido
         panelContenido = new JPanel(new BorderLayout());
         panelContenido.setBackground(UIConstants.PANEL_BG);
         panelContenido.add(new JLabel("Bienvenido al sistema académico", JLabel.CENTER), BorderLayout.CENTER);
         add(panelContenido, BorderLayout.CENTER);
-
-        // Navegación
-        btnCursos.addActionListener(e -> {
-            panelContenido.removeAll();
-            panelContenido.add(new PanelCursos(arregloCursos, matrizSemestres, listaCursos), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnEstudiantes.addActionListener(e -> {
-            panelContenido.removeAll();
-            panelContenido.add(new PanelEstudiantes(arbolEstudiantes), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnMatricula.addActionListener(e -> {
-            panelContenido.removeAll();
-            panelContenido.add(new PanelMatricula(listaCursos, arbolEstudiantes, listaMatricula, pilaHistorial), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnHistorial.addActionListener(e -> {
-            java.util.List<String> carnets = new ArrayList<>();
-            arbolEstudiantes.inorden(est -> carnets.add(est.getCarnet()));
-
-            // ✅ Conversión de List<String> a String[]
-            String[] arregloCarnets = carnets.toArray(new String[0]);
-
-            // ✅ PanelHistorial espera un arreglo, no una lista
-            PanelHistorial panel = new PanelHistorial(pilaHistorial, arregloCarnets);
-            panelContenido.removeAll();
-            panelContenido.add(panel, BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnSolicitudes.addActionListener(e -> {
-            panelContenido.removeAll();
-            panelContenido.add(new PanelSolicitudesEstudiante(colaSolicitudes), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnMisMatriculas.addActionListener(e -> {
-            panelContenido.removeAll();
-            panelContenido.add(new PanelMisMatriculas(listaMatricula, usuarioActual.getCarnet(), arbolEstudiantes), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnAtenderSolicitudes.addActionListener(e -> {
-            String rolClick = usuarioActual.getRol() == null ? "" : usuarioActual.getRol().trim().toLowerCase();
-            if (!(rolClick.equals("admin") || rolClick.equals("administrador"))) {
-                JOptionPane.showMessageDialog(this, "Acceso restringido solo para administradores.");
-                return;
-            }
-
-            panelContenido.removeAll();
-            panelContenido.add(new PanelAdministradorSolicitudes(colaSolicitudes), BorderLayout.CENTER);
-            panelContenido.revalidate();
-            panelContenido.repaint();
-        });
-
-        btnSalir.addActionListener(e -> {
-            int confirmar = JOptionPane.showConfirmDialog(this, "¿Deseas salir?", "Confirmar salida", JOptionPane.YES_NO_OPTION);
-            if (confirmar == JOptionPane.YES_OPTION) {
-                System.exit(0);
-            }
-        });
     }
 
+    // --- MÉTODOS DE CONTROL PARA EL CONTROLADOR ---
+
+    // Este método permite al controlador cambiar el panel del centro sin saber cómo se redibuja
+    public void cambiarPanelCentro(JPanel nuevoPanel) {
+        panelContenido.removeAll();
+        panelContenido.add(nuevoPanel, BorderLayout.CENTER);
+        panelContenido.revalidate();
+        panelContenido.repaint();
+    }
+
+    // Getters para que el controlador pueda escuchar los botones
+    public JButton getBtnCursos() { return btnCursos; }
+    public JButton getBtnEstudiantes() { return btnEstudiantes; }
+    public JButton getBtnMatricula() { return btnMatricula; }
+    public JButton getBtnHistorial() { return btnHistorial; }
+    public JButton getBtnSolicitudes() { return btnSolicitudes; }
+    public JButton getBtnMisMatriculas() { return btnMisMatriculas; }
+    public JButton getBtnAtenderSolicitudes() { return btnAtenderSolicitudes; }
+    public JButton getBtnSalir() { return btnSalir; }
+    
+    public Usuario getUsuarioActual() { return usuarioActual; }
 }

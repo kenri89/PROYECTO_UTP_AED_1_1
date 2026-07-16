@@ -1,47 +1,28 @@
 package gui;
 
-import com.google.common.base.Strings;
-import estructuras.ArregloCursos;
-import estructuras.MatrizSemestres;
-import estructuras.ListaCursos;
-import modelo.Curso;
-import util.ExportadorExcel;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class PanelCursos extends JPanel {
 
-    private ArregloCursos arregloCursos;
-    private MatrizSemestres matrizSemestres;
-    private ListaCursos listaCursos;
-
-    private JTable tablaCursos;
     private DefaultTableModel modeloTabla;
-
+    private JTable tablaCursos;
     private JTextField txtCodigo, txtNombre, txtCreditos;
     private JComboBox<String> comboSemestre;
+    private JButton btnAgregar, btnEliminar, btnActualizar, btnExportar;
+    private JMenuItem itemActualizar;
 
-    public PanelCursos(ArregloCursos arregloCursos, MatrizSemestres matrizSemestres, ListaCursos listaCursos) {
-        this.arregloCursos = arregloCursos;
-        this.matrizSemestres = matrizSemestres;
-        this.listaCursos = listaCursos;
-
+    public PanelCursos() {
         setLayout(new BorderLayout());
         setBackground(UIConstants.PANEL_BG);
 
         agregarFormulario();
         agregarTabla();
-        try {
-            cargarDatosDesdeSQL();
-        } catch (Exception e) {
-            System.err.println("Error al cargar datos desde BD (usando modo local): " + e.getMessage());
-        }
     }
+
     private void agregarFormulario() {
         JPanel panelForm = new JPanel(new GridLayout(6, 2, 5, 5));
         panelForm.setBorder(BorderFactory.createTitledBorder("Datos del Curso"));
@@ -65,19 +46,15 @@ public class PanelCursos extends JPanel {
         panelForm.add(new JLabel("Semestre:"));
         panelForm.add(comboSemestre);
 
-        JButton btnAgregar = UIConstants.crearBoton("Agregar Curso");
-        JButton btnEliminar = UIConstants.crearBoton("Eliminar por Código");
-        JButton btnActualizar = UIConstants.crearBoton("Actualizar Curso");
+        btnAgregar = UIConstants.crearBoton("Agregar Curso");
+        btnEliminar = UIConstants.crearBoton("Eliminar por Código");
+        btnActualizar = UIConstants.crearBoton("Actualizar Curso");
 
         panelForm.add(btnAgregar);
         panelForm.add(btnEliminar);
         panelForm.add(btnActualizar);
 
         add(panelForm, BorderLayout.WEST);
-
-        btnAgregar.addActionListener(e -> insertarCurso());
-        btnEliminar.addActionListener(e -> eliminarCurso());
-        btnActualizar.addActionListener(e -> confirmarYActualizarCurso());
     }
 
     private void agregarTabla() {
@@ -86,23 +63,35 @@ public class PanelCursos extends JPanel {
         JScrollPane scrollPane = new JScrollPane(tablaCursos);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Cursos Registrados"));
 
+        // Crear menú contextual pero delegar su comportamiento al controlador
+        JPopupMenu menuContextual = new JPopupMenu();
+        itemActualizar = new JMenuItem("Actualizar");
+        menuContextual.add(itemActualizar);
+
         tablaCursos.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (e.isPopupTrigger()) mostrarMenuContextual(e);
+                if (e.isPopupTrigger()) mostrarMenu(e);
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()) mostrarMenuContextual(e);
+                if (e.isPopupTrigger()) mostrarMenu(e);
+            }
+
+            private void mostrarMenu(MouseEvent e) {
+                int fila = tablaCursos.rowAtPoint(e.getPoint());
+                if (fila >= 0 && fila < tablaCursos.getRowCount()) {
+                    tablaCursos.setRowSelectionInterval(fila, fila);
+                    menuContextual.show(e.getComponent(), e.getX(), e.getY());
+                }
             }
         });
 
         JToolBar barraExport = new JToolBar();
         barraExport.setFloatable(false);
         barraExport.setBackground(UIConstants.PANEL_BG);
-        JButton btnExportar = UIConstants.crearBoton("Exportar a Excel");
-        btnExportar.addActionListener(e -> exportarExcel());
+        btnExportar = UIConstants.crearBoton("Exportar a Excel");
         barraExport.add(Box.createHorizontalGlue());
         barraExport.add(btnExportar);
         barraExport.add(Box.createHorizontalStrut(10));
@@ -114,162 +103,44 @@ public class PanelCursos extends JPanel {
         add(panelCentral, BorderLayout.CENTER);
     }
 
-    private void mostrarMenuContextual(MouseEvent e) {
-        int fila = tablaCursos.rowAtPoint(e.getPoint());
-        if (fila >= 0 && fila < tablaCursos.getRowCount()) {
-            tablaCursos.setRowSelectionInterval(fila, fila);
+    // --- MÉTODOS DE ACCESO Y MANIPULACIÓN DE LA UI ---
 
-            JPopupMenu menu = new JPopupMenu();
-            JMenuItem itemActualizar = new JMenuItem("Actualizar");
-
-            itemActualizar.addActionListener(ev -> cargarCursoSeleccionado());
-
-            menu.add(itemActualizar);
-            menu.show(e.getComponent(), e.getX(), e.getY());
-        }
-    }
-
-    private void cargarCursoSeleccionado() {
-        int fila = tablaCursos.getSelectedRow();
-        if (fila == -1) return;
-
-        txtCodigo.setText(modeloTabla.getValueAt(fila, 0).toString());
-        txtNombre.setText(modeloTabla.getValueAt(fila, 1).toString());
-        txtCreditos.setText(modeloTabla.getValueAt(fila, 2).toString());
-        comboSemestre.setSelectedIndex(Integer.parseInt(modeloTabla.getValueAt(fila, 3).toString()) - 1);
-
-        txtCodigo.setEnabled(false);
-    }
-
-    private void insertarCurso() {
-        String codigo = txtCodigo.getText().trim();
-        String nombre = txtNombre.getText().trim();
-        String creditosStr = txtCreditos.getText().trim();
-        int semestre = comboSemestre.getSelectedIndex() + 1;
-
-        if (codigo.isEmpty() || nombre.isEmpty() || creditosStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, completa todos los campos.");
-            return;
-        }
-
-        int creditos;
-        try {
-            creditos = Integer.parseInt(creditosStr);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Los créditos deben ser un número.");
-            return;
-        }
-
-        dao.CursoDAO cursoDAO = new dao.CursoDAO();
-        boolean exitoSQL = cursoDAO.insertar(codigo, nombre, creditos, semestre);
-
-        if (exitoSQL) {
-            JOptionPane.showMessageDialog(this, "Curso registrado con éxito en la base de datos.");
-            cargarDatosDesdeSQL();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error: no se pudo guardar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        limpiarCampos();
-    }
-
-    private void eliminarCurso() {
-        int fila = tablaCursos.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona un curso para eliminar.");
-            return;
-        }
-
-        String codigo = modeloTabla.getValueAt(fila, 0).toString();
-        int opcion = JOptionPane.showConfirmDialog(this, "¿Deseas eliminar el curso con código " + codigo + "?",
-                "Confirmación", JOptionPane.YES_NO_OPTION);
-        if (opcion != JOptionPane.YES_OPTION) return;
-
-        new dao.CursoDAO().eliminar(codigo);
-        JOptionPane.showMessageDialog(this, "Curso eliminado correctamente.");
-        cargarDatosDesdeSQL();
-    }
-
-    private void confirmarYActualizarCurso() {
-        String codigo = txtCodigo.getText().trim();
-        String nombre = txtNombre.getText().trim();
-        String creditosStr = txtCreditos.getText().trim();
-        int semestre = comboSemestre.getSelectedIndex() + 1;
-
-        if (codigo.isEmpty() || nombre.isEmpty() || creditosStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Completa todos los campos para actualizar.");
-            return;
-        }
-
-        int opcion = JOptionPane.showConfirmDialog(this,
-                "¿Deseas actualizar este curso?", "Confirmación", JOptionPane.YES_NO_OPTION);
-        if (opcion != JOptionPane.YES_OPTION) return;
-
-        try {
-            int creditos = Integer.parseInt(creditosStr);
-
-            dao.CursoDAO cursoDAO = new dao.CursoDAO();
-            cursoDAO.actualizar(codigo, nombre, creditos, semestre);
-
-            JOptionPane.showMessageDialog(this, "Curso actualizado correctamente.");
-            cargarDatosDesdeSQL();
-            limpiarCampos();
-            txtCodigo.setEnabled(true);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Créditos inválidos.");
-        }
-    }
-
-    private void cargarTabla() {
-        modeloTabla.setRowCount(0);
-        for (Curso curso : arregloCursos.obtenerCursos()) {
-            modeloTabla.addRow(new Object[]{
-                    curso.getCodigo(), curso.getNombre(),
-                    curso.getCreditos(), curso.getSemestre()
-            });
-        }
-    }
-
-    private void limpiarCampos() {
+    public void limpiarCampos() {
         txtCodigo.setText("");
         txtNombre.setText("");
         txtCreditos.setText("");
         comboSemestre.setSelectedIndex(0);
         txtCodigo.setEnabled(true);
     }
-    private void cargarDatosDesdeSQL() {
-        dao.CursoDAO cursoDAO = new dao.CursoDAO();
-        java.util.List<String[]> cursosSQL = cursoDAO.listar();
 
-        arregloCursos.limpiar();
-        matrizSemestres.limpiar();
-        listaCursos.limpiar();
-
-        for (String[] datos : cursosSQL) {
-            String codigo = datos[0];
-            String nombre = datos[1];
-            int creditos = Integer.parseInt(datos[2]);
-            int semestre = Integer.parseInt(datos[3]);
-
-            Curso curso = new Curso(codigo, nombre, creditos, semestre);
-            arregloCursos.insertar(curso);
-            matrizSemestres.insertarPorSemestre(curso);
-            listaCursos.insertar(curso);
-        }
-
-        cargarTabla();
+    public void rellenarCampos(String codigo, String nombre, String creditos, int semestre) {
+        txtCodigo.setText(codigo);
+        txtNombre.setText(nombre);
+        txtCreditos.setText(creditos);
+        comboSemestre.setSelectedIndex(semestre - 1);
+        txtCodigo.setEnabled(false);
     }
 
-    private void exportarExcel() {
-        JFileChooser fc = new JFileChooser();
-        fc.setSelectedFile(new File("cursos.xls"));
-        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File archivo = fc.getSelectedFile();
-            try {
-                ExportadorExcel.exportarCursos(arregloCursos, archivo);
-                JOptionPane.showMessageDialog(this, "Cursos exportados a Excel exitosamente.");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+    public void limpiarTabla() {
+        modeloTabla.setRowCount(0);
     }
+
+    public void agregarFilaTabla(Object[] fila) {
+        modeloTabla.addRow(fila);
+    }
+
+    // --- GETTERS ---
+
+    public String getCodigoInput() { return txtCodigo.getText().trim(); }
+    public String getNombreInput() { return txtNombre.getText().trim(); }
+    public String getCreditosInput() { return txtCreditos.getText().trim(); }
+    public int getSemestreSeleccionado() { return comboSemestre.getSelectedIndex() + 1; }
+
+    public JTable getTablaCursos() { return tablaCursos; }
+    public DefaultTableModel getModeloTabla() { return modeloTabla; }
+    public JButton getBtnAgregar() { return btnAgregar; }
+    public JButton getBtnEliminar() { return btnEliminar; }
+    public JButton getBtnActualizar() { return btnActualizar; }
+    public JButton getBtnExportar() { return btnExportar; }
+    public JMenuItem getItemActualizar() { return itemActualizar; }
 }

@@ -1,12 +1,15 @@
 package gui;
 
 import com.google.common.base.Strings;
-import modelo.Usuario;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
 
 public class LoginFrame extends JFrame {
+    private JTextField txtUsuario;
+    private JPasswordField txtPassword;
+    private JComboBox<String> comboSelRol;
+    private JButton btnLogin;
 
     public LoginFrame() {
         setTitle("Inicio de Sesión");
@@ -14,7 +17,7 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
-
+        setVisible(true);
         JPanel panelPrincipal = new JPanel(new GridLayout(1, 2));
 
         JPanel panelIzquierdo = new JPanel(null);
@@ -31,7 +34,7 @@ public class LoginFrame extends JFrame {
         lblUsuario.setBounds(50, 110, 280, 20);
         panelIzquierdo.add(lblUsuario);
 
-        JTextField txtUsuario = new JTextField();
+        txtUsuario = new JTextField();
         txtUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtUsuario.setBounds(50, 135, 280, 30);
         txtUsuario.setBorder(new MatteBorder(0, 0, 2, 0, Color.BLACK));
@@ -42,7 +45,7 @@ public class LoginFrame extends JFrame {
         lblPass.setBounds(50, 190, 280, 20);
         panelIzquierdo.add(lblPass);
 
-        JPasswordField txtPassword = new JPasswordField();
+        txtPassword = new JPasswordField();
         txtPassword.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtPassword.setBounds(50, 215, 280, 30);
         txtPassword.setBorder(new MatteBorder(0, 0, 2, 0, Color.BLACK));
@@ -53,13 +56,13 @@ public class LoginFrame extends JFrame {
         lblRol.setBounds(50, 270, 280, 20);
         panelIzquierdo.add(lblRol);
 
-        JComboBox<String> comboSelRol = new JComboBox<>(new String[]{"Administrador", "Estudiante", "Secretaría"});
+        comboSelRol = new JComboBox<>(new String[]{"Administrador", "Estudiante", "Secretaría"});
         comboSelRol.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         comboSelRol.setBounds(50, 295, 280, 30);
         comboSelRol.setBackground(Color.WHITE);
         panelIzquierdo.add(comboSelRol);
 
-        JButton btnLogin = new JButton("Ingresar");
+        btnLogin = new JButton("Ingresar");
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLogin.setBackground(UIConstants.AZUL_MEDIO);
         btnLogin.setForeground(Color.WHITE);
@@ -86,29 +89,21 @@ public class LoginFrame extends JFrame {
         panelPrincipal.add(panelIzquierdo);
         panelPrincipal.add(panelDerecho);
         add(panelPrincipal);
+        
+    }
+    public String getUsuario() {
+        return txtUsuario.getText().trim();
+    }
 
-        btnLogin.addActionListener(e -> {
-            String user = txtUsuario.getText().trim();
-            String pass = new String(txtPassword.getPassword()).trim();
-            String rolSeleccionado = (String) comboSelRol.getSelectedItem();
+    public String getPassword() {
+        return new String(txtPassword.getPassword()).trim();
+    }
 
-            if (Strings.isNullOrEmpty(user) || Strings.isNullOrEmpty(pass)) {
-                JOptionPane.showMessageDialog(this, "Por favor, ingrese usuario y contraseña.");
-                return;
-            }
+    public String getRol() {
+        return (String) comboSelRol.getSelectedItem();
+    }
 
-            String rol = rolSeleccionado != null ? rolSeleccionado : "Administrador";
-            dao.UsuarioDAO usuarioDAO = new dao.UsuarioDAO();
-            Usuario usuarioLogueado = usuarioDAO.autenticar(user, pass, rol);
-
-            if (usuarioLogueado != null) {
-                JOptionPane.showMessageDialog(this, "¡Bienvenido al sistema como " + usuarioLogueado.getRol() + "!");
-                MenuPrincipal ventana = new MenuPrincipal(usuarioLogueado);
-                ventana.setVisible(true);
-                this.dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de acceso", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+    public JButton getBtnLogin() {
+        return btnLogin;
     }
 }

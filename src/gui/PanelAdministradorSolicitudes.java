@@ -1,25 +1,18 @@
 package gui;
 
 import modelo.Solicitud;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDateTime;
-import java.util.LinkedList;
 import java.util.Queue;
 
 public class PanelAdministradorSolicitudes extends JPanel {
 
-    private Queue<Solicitud> colaSolicitudes;
-    private java.util.List<Solicitud> solicitudesAtendidas;
     private DefaultTableModel modeloPendientes;
     private DefaultTableModel modeloAtendidas;
+    private JButton btnAtender;
 
-    public PanelAdministradorSolicitudes(Queue<Solicitud> colaSolicitudes) {
-        this.colaSolicitudes = colaSolicitudes;
-        this.solicitudesAtendidas = new LinkedList<>();
-
+    public PanelAdministradorSolicitudes() {
         setLayout(new BorderLayout());
         setBackground(UIConstants.PANEL_BG);
 
@@ -37,7 +30,7 @@ public class PanelAdministradorSolicitudes extends JPanel {
         panelPendientes.setBorder(BorderFactory.createTitledBorder("Solicitudes Pendientes"));
         panelPendientes.add(new JScrollPane(tablaPendientes), BorderLayout.CENTER);
 
-        JButton btnAtender = UIConstants.crearBoton("Atender Siguiente");
+        btnAtender = UIConstants.crearBoton("Atender Siguiente");
         panelPendientes.add(btnAtender, BorderLayout.SOUTH);
 
         // --- Tabla de solicitudes atendidas ---
@@ -54,48 +47,25 @@ public class PanelAdministradorSolicitudes extends JPanel {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelPendientes, panelAtendidas);
         splitPane.setResizeWeight(0.5);
         add(splitPane, BorderLayout.CENTER);
-
-        // Botón de atención
-        btnAtender.addActionListener(e -> atenderSiguiente());
-
-        // Mostrar datos al cargar
-        actualizarTablas();
     }
 
-    private void atenderSiguiente() {
-        if (colaSolicitudes.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay solicitudes pendientes.");
-            return;
-        }
+    // --- MÉTODOS PARA ACTUALIZAR LA INTERFAZ ---
 
-        Solicitud s = colaSolicitudes.poll(); // Extraer solicitud
-        s.setAtendida(true);
-        s.setFechaAtencion(LocalDateTime.now());
-        solicitudesAtendidas.add(s);
-
-        actualizarTablas();
-    }
-
-    private void actualizarTablas() {
+    public void limpiarTablas() {
         modeloPendientes.setRowCount(0);
-        for (Solicitud s : colaSolicitudes) {
-            modeloPendientes.addRow(new Object[]{
-                    s.getCarnet(),
-                    s.getTipo(),
-                    s.getDescripcion(),
-                    s.getFechaFormateada()
-            });
-        }
-
         modeloAtendidas.setRowCount(0);
-        for (Solicitud s : solicitudesAtendidas) {
-            modeloAtendidas.addRow(new Object[]{
-                    s.getCarnet(),
-                    s.getTipo(),
-                    s.getDescripcion(),
-                    s.getFechaFormateada(),
-                    s.getFechaAtencionFormateada()
-            });
-        }
+    }
+
+    public void agregarFilaPendiente(Object[] fila) {
+        modeloPendientes.addRow(fila);
+    }
+
+    public void agregarFilaAtendida(Object[] fila) {
+        modeloAtendidas.addRow(fila);
+    }
+
+    // Getter para que el controlador escuche el botón
+    public JButton getBtnAtender() {
+        return btnAtender;
     }
 }

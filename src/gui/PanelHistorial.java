@@ -1,16 +1,4 @@
-// ================================
-// CLASE: PanelHistorial
-// Tema: Unidad 4 - GUI con Swing y JTable
-//       Unidad 3 - Pila (estructura de control de acciones)
-// Uso: Muestra el historial de acciones sobre matrículas (registro, modificación, eliminación).
-// Permite filtrar por estudiante usando su carnet.
-// ================================
-
 package gui;
-
-import estructuras.PilaAcciones_U3;
-import estructuras.AccionMatricula;
-import modelo.Matricula;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -21,22 +9,17 @@ public class PanelHistorial extends JPanel {
     private JComboBox<String> comboCarnets;
     private JTable tabla;
     private DefaultTableModel modelo;
+    private JButton btnFiltrar;
 
-    private PilaAcciones_U3 pilaAcciones;
-    private String[] carnets; // Reemplazo de List<String>
-
-    public PanelHistorial(PilaAcciones_U3 pilaAcciones, String[] carnets) {
-        this.pilaAcciones = pilaAcciones;
-        this.carnets = carnets;
-
+    public PanelHistorial(String[] carnets) {
         setLayout(new BorderLayout());
         setBackground(UIConstants.PANEL_BG);
 
-        agregarFiltroCarnets();   // Filtro por estudiante
-        agregarTablaHistorial(); // Tabla con historial
+        agregarFiltroCarnets(carnets); // Filtro por estudiante
+        agregarTablaHistorial();       // Tabla con historial
     }
 
-    private void agregarFiltroCarnets() {
+    private void agregarFiltroCarnets(String[] carnets) {
         JPanel panelFiltro = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelFiltro.setBorder(BorderFactory.createTitledBorder("Filtrar por Estudiante"));
         panelFiltro.setBackground(UIConstants.PANEL_BG);
@@ -44,12 +27,13 @@ public class PanelHistorial extends JPanel {
         comboCarnets = new JComboBox<>();
         comboCarnets.addItem("Todos"); // Filtro global
 
-        for (String c : carnets) {
-            comboCarnets.addItem(c);
+        if (carnets != null) {
+            for (String c : carnets) {
+                comboCarnets.addItem(c);
+            }
         }
 
-        JButton btnFiltrar = UIConstants.crearBoton("Filtrar");
-        btnFiltrar.addActionListener(e -> cargarHistorial());
+        btnFiltrar = UIConstants.crearBoton("Filtrar");
 
         panelFiltro.add(new JLabel("Carnet:"));
         panelFiltro.add(comboCarnets);
@@ -65,27 +49,29 @@ public class PanelHistorial extends JPanel {
         scroll.setBorder(BorderFactory.createTitledBorder("Historial de Matrículas"));
 
         add(scroll, BorderLayout.CENTER);
-        cargarHistorial();
     }
 
-    private void cargarHistorial() {
-        modelo.setRowCount(0); // Limpiar tabla
-        String filtro = (String) comboCarnets.getSelectedItem();
+    // --- MÉTODOS DE MANIPULACIÓN DE LA UI ---
 
-        PilaAcciones_U3 copia = pilaAcciones.copiar(); // Copiar la pila para no modificarla
-        while (!copia.estaVacia()) {
-            AccionMatricula accion = copia.desapilar();
-            Matricula mat = accion.getMatricula();
+    public void limpiarTabla() {
+        modelo.setRowCount(0);
+    }
 
-            if (filtro.equals("Todos") || mat.getEstudiante().getCarnet().equals(filtro)) {
-                modelo.addRow(new Object[]{
-                        mat.getEstudiante().getCarnet(),
-                        mat.getEstudiante().getNombre(),
-                        mat.getCurso().getCodigo(),
-                        mat.getCurso().getNombre(),
-                        accion.getTipo()
-                });
-            }
-        }
+    public void agregarFilaTabla(Object[] fila) {
+        modelo.addRow(fila);
+    }
+
+    public String getFiltroSeleccionado() {
+        return (String) comboCarnets.getSelectedItem();
+    }
+
+    // --- GETTERS ---
+
+    public JButton getBtnFiltrar() {
+        return btnFiltrar;
+    }
+
+    public JTable getTabla() {
+        return tabla;
     }
 }
