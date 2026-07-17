@@ -42,8 +42,12 @@ public class MenuPrincipal extends JFrame {
         setTitle("Sistema Académico - Rol: " + usuarioActual.getRol());
         setSize(1000, 700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                new LoginFrame().setVisible(true);
+            }
         });
         setLayout(new BorderLayout());
 
@@ -76,7 +80,7 @@ public class MenuPrincipal extends JFrame {
 
         btnCursos.setVisible(esAdmin || esSecretaria);
         btnEstudiantes.setVisible(esAdmin || esSecretaria);
-        btnMatricula.setVisible(esAdmin || esSecretaria);
+        btnMatricula.setVisible(esAdmin || esSecretaria || esEstudiante);
         btnHistorial.setVisible(esAdmin || esEstudiante || esDocente);
         btnSolicitudes.setVisible(esAdmin || esEstudiante || esSecretaria);
         btnMisMatriculas.setVisible(esEstudiante);
@@ -116,7 +120,8 @@ public class MenuPrincipal extends JFrame {
 
         btnMatricula.addActionListener(e -> {
             panelContenido.removeAll();
-            panelContenido.add(new PanelMatricula(listaCursos, arbolEstudiantes, listaMatricula, pilaHistorial), BorderLayout.CENTER);
+            String carnetEst = usuarioActual.getRol().trim().equalsIgnoreCase("estudiante") ? usuarioActual.getCarnet() : null;
+            panelContenido.add(new PanelMatricula(listaCursos, arbolEstudiantes, listaMatricula, pilaHistorial, carnetEst), BorderLayout.CENTER);
             panelContenido.revalidate();
             panelContenido.repaint();
         });
@@ -164,9 +169,9 @@ public class MenuPrincipal extends JFrame {
         });
 
         btnSalir.addActionListener(e -> {
-            int confirmar = JOptionPane.showConfirmDialog(this, "¿Deseas salir?", "Confirmar salida", JOptionPane.YES_NO_OPTION);
+            int confirmar = JOptionPane.showConfirmDialog(this, "¿Cerrar sesión?", "Confirmar", JOptionPane.YES_NO_OPTION);
             if (confirmar == JOptionPane.YES_OPTION) {
-                System.exit(0);
+                dispose();
             }
         });
     }

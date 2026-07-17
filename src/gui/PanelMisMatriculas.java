@@ -11,7 +11,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class PanelMisMatriculas extends JPanel {
@@ -134,7 +133,7 @@ public class PanelMisMatriculas extends JPanel {
 
     private void exportarReporte() {
         JFileChooser fc = new JFileChooser();
-        fc.setSelectedFile(new File("reporte_matriculas.xls"));
+        fc.setSelectedFile(new File("reporte_matriculas.xlsx"));
         if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
                 List<Matricula> mis = listaMatricula.buscarPorCarnet(carnet);
@@ -144,7 +143,7 @@ public class PanelMisMatriculas extends JPanel {
                 }
                 ExportadorExcel.exportarMatriculas(filtrada, fc.getSelectedFile());
                 JOptionPane.showMessageDialog(this, "Reporte descargado exitosamente.");
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 JOptionPane.showMessageDialog(this, "Error al descargar reporte: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }

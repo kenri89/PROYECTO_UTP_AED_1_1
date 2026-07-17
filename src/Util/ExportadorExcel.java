@@ -7,8 +7,8 @@ import estructuras.ListaMatricula;
 import modelo.Curso;
 import modelo.Estudiante;
 import modelo.Matricula;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ public final class ExportadorExcel {
     }
 
     public static void exportarCursos(ArregloCursos arreglo, File destino) throws IOException {
-        try (Workbook wb = new HSSFWorkbook()) {
+        try (Workbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Cursos");
             crearEncabezado(sheet, "Código", "Nombre", "Créditos", "Semestre");
             int fila = 1;
@@ -47,7 +47,7 @@ public final class ExportadorExcel {
     }
 
     public static void exportarEstudiantes(ArbolEstudiantes arbol, File destino) throws IOException {
-        try (Workbook wb = new HSSFWorkbook()) {
+        try (Workbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Estudiantes");
             crearEncabezado(sheet, "Carnet", "Nombre", "Carrera");
             int fila = 1;
@@ -68,7 +68,7 @@ public final class ExportadorExcel {
     }
 
     public static void exportarMatriculas(ListaMatricula lista, File destino) throws IOException {
-        try (Workbook wb = new HSSFWorkbook()) {
+        try (Workbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Matriculas");
             crearEncabezado(sheet, "Carnet", "Estudiante", "Código Curso", "Curso");
             int fila = 1;

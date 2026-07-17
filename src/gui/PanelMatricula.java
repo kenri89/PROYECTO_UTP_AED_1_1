@@ -31,16 +31,24 @@ public class PanelMatricula extends JPanel {
     private DefaultTableModel modelo;
 
     private Matricula matriculaSeleccionada = null;
+    private final String carnetEstudiante;
 
     public PanelMatricula(ListaCursos listaCursos, ArbolEstudiantes arbolEstudiantes, ListaMatricula listaMatricula, PilaAcciones_U3 pilaHistorial) {
+        this(listaCursos, arbolEstudiantes, listaMatricula, pilaHistorial, null);
+    }
+
+    public PanelMatricula(ListaCursos listaCursos, ArbolEstudiantes arbolEstudiantes, ListaMatricula listaMatricula, PilaAcciones_U3 pilaHistorial, String carnetEstudiante) {
         this.listaCursos = listaCursos;
         this.arbolEstudiantes = arbolEstudiantes;
         this.listaMatricula = listaMatricula;
         this.pilaHistorial = pilaHistorial;
+        this.carnetEstudiante = carnetEstudiante;
 
         setLayout(new BorderLayout());
         setBackground(UIConstants.PANEL_BG);
 
+        cargarCursosDesdeSQL();
+        cargarEstudiantesDesdeSQL();
         agregarFormulario();
         agregarTabla();
         cargarCombos();
@@ -52,8 +60,9 @@ public class PanelMatricula extends JPanel {
     }
 
     private void agregarFormulario() {
+        boolean esAutoMatricula = carnetEstudiante != null;
         JPanel panelForm = new JPanel(new GridLayout(5, 2, 5, 5));
-        panelForm.setBorder(BorderFactory.createTitledBorder("Datos de Matrícula"));
+        panelForm.setBorder(BorderFactory.createTitledBorder(esAutoMatricula ? "Auto-matrícula de Estudiante" : "Datos de Matrícula"));
         panelForm.setBackground(UIConstants.PANEL_LIGHT);
 
         comboCarnet = new JComboBox<>();
@@ -64,15 +73,20 @@ public class PanelMatricula extends JPanel {
         panelForm.add(new JLabel("Código Curso:"));
         panelForm.add(comboCodigoCurso);
 
-        JButton btnRegistrar = UIConstants.crearBoton("Registrar");
+        JButton btnRegistrar = UIConstants.crearBoton(esAutoMatricula ? "Matricularme" : "Registrar");
         JButton btnActualizar = UIConstants.crearBoton("Actualizar");
         JButton btnVer = UIConstants.crearBoton("Ver Matrículas");
         JButton btnDeshacer = UIConstants.crearBoton("Deshacer");
 
+        btnActualizar.setVisible(!esAutoMatricula);
+        btnDeshacer.setVisible(!esAutoMatricula);
+
         panelForm.add(btnRegistrar);
-        panelForm.add(btnActualizar);
         panelForm.add(btnVer);
-        panelForm.add(btnDeshacer);
+        if (!esAutoMatricula) {
+            panelForm.add(btnActualizar);
+            panelForm.add(btnDeshacer);
+        }
 
         add(panelForm, BorderLayout.WEST);
 
@@ -88,12 +102,15 @@ public class PanelMatricula extends JPanel {
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBorder(BorderFactory.createTitledBorder("Matrículas"));
 
+        boolean esAutoMatricula = carnetEstudiante != null;
         JPopupMenu menu = new JPopupMenu();
         JMenuItem itemActualizar = new JMenuItem("Actualizar");
         JMenuItem itemEliminar = new JMenuItem("Eliminar");
 
-        menu.add(itemActualizar);
-        menu.add(itemEliminar);
+        if (!esAutoMatricula) {
+            menu.add(itemActualizar);
+            menu.add(itemEliminar);
+        }
 
         tabla.setComponentPopupMenu(menu);
         tabla.addMouseListener(new MouseAdapter() {
@@ -111,7 +128,12 @@ public class PanelMatricula extends JPanel {
                 matriculaSeleccionada = listaMatricula.buscar(carnet, codCurso);
                 if (matriculaSeleccionada != null) {
                     comboCarnet.setSelectedItem(carnet);
-                    comboCodigoCurso.setSelectedItem(codCurso);
+                    for (int i = 0; i < comboCodigoCurso.getItemCount(); i++) {
+                        if (comboCodigoCurso.getItemAt(i).toString().startsWith(codCurso)) {
+                            comboCodigoCurso.setSelectedIndex(i);
+                            break;
+                        }
+                    }
                 }
             }
         });
@@ -134,9 +156,15 @@ public class PanelMatricula extends JPanel {
         add(panelCentral, BorderLayout.CENTER);
     }
 
+    private String codigoDesdeCursoItem(Object item) {
+        String s = (String) item;
+        int idx = s.indexOf(" - ");
+        return idx >= 0 ? s.substring(0, idx) : s;
+    }
+
     private void registrarMatricula() {
-        String carnet = (String) comboCarnet.getSelectedItem();
-        String codigo = (String) comboCodigoCurso.getSelectedItem();
+        String carnet = carnetEstudiante != null ? carnetEstudiante : (String) comboCarnet.getSelectedItem();
+        String codigo = codigoDesdeCursoItem(comboCodigoCurso.getSelectedItem());
 
         if (carnet == null || codigo == null) {
             JOptionPane.showMessageDialog(this, "Debe seleccionar un estudiante y un curso.");
@@ -170,7 +198,7 @@ public class PanelMatricula extends JPanel {
         }
 
         String nuevoCarnet = (String) comboCarnet.getSelectedItem();
-        String nuevoCurso = (String) comboCodigoCurso.getSelectedItem();
+        String nuevoCurso = codigoDesdeCursoItem(comboCodigoCurso.getSelectedItem());
 
         Estudiante nuevoEst = arbolEstudiantes.buscar(nuevoCarnet);
         Curso nuevoCur = listaCursos.buscar(nuevoCurso);
@@ -245,12 +273,39 @@ public class PanelMatricula extends JPanel {
         cargarMatriculasDesdeSQL();
     }
 
+    private void cargarCursosDesdeSQL() {
+        dao.CursoDAO cursoDAO = new dao.CursoDAO();
+        java.util.List<String[]> cursosSQL = cursoDAO.listar();
+        if (cursosSQL != null && !cursosSQL.isEmpty()) {
+            listaCursos.limpiar();
+            for (String[] datos : cursosSQL) {
+                listaCursos.insertar(new Curso(datos[0], datos[1], Integer.parseInt(datos[2]), Integer.parseInt(datos[3])));
+            }
+        }
+    }
+
+    private void cargarEstudiantesDesdeSQL() {
+        dao.EstudianteDAO estudianteDAO = new dao.EstudianteDAO();
+        java.util.List<String[]> estudiantesSQL = estudianteDAO.listar();
+        if (estudiantesSQL != null && !estudiantesSQL.isEmpty()) {
+            arbolEstudiantes.limpiar();
+            for (String[] datos : estudiantesSQL) {
+                arbolEstudiantes.insertar(new Estudiante(datos[0], datos[1], datos[2]));
+            }
+        }
+    }
+
     private void cargarCombos() {
         comboCarnet.removeAllItems();
         arbolEstudiantes.inorden(est -> comboCarnet.addItem(est.getCarnet()));
 
+        if (carnetEstudiante != null) {
+            comboCarnet.setSelectedItem(carnetEstudiante);
+            comboCarnet.setEnabled(false);
+        }
+
         comboCodigoCurso.removeAllItems();
-        listaCursos.recorrer(curso -> comboCodigoCurso.addItem(curso.getCodigo()));
+        listaCursos.recorrer(curso -> comboCodigoCurso.addItem(curso.getCodigo() + " - " + curso.getNombre()));
     }
 
     private void cargarMatriculasDesdeSQL() {
@@ -276,12 +331,16 @@ public class PanelMatricula extends JPanel {
 
     private void cargarTabla() {
         modelo.setRowCount(0);
-        listaMatricula.recorrer(m -> modelo.addRow(new Object[]{
-                m.getEstudiante().getCarnet(),
-                m.getEstudiante().getNombre(),
-                m.getCurso().getCodigo(),
-                m.getCurso().getNombre()
-        }));
+        listaMatricula.recorrer(m -> {
+            if (carnetEstudiante == null || m.getEstudiante().getCarnet().equals(carnetEstudiante)) {
+                modelo.addRow(new Object[]{
+                        m.getEstudiante().getCarnet(),
+                        m.getEstudiante().getNombre(),
+                        m.getCurso().getCodigo(),
+                        m.getCurso().getNombre()
+                });
+            }
+        });
     }
 
     private void exportarExcel() {
@@ -291,7 +350,7 @@ public class PanelMatricula extends JPanel {
             try {
                 ExportadorExcel.exportarMatriculas(listaMatricula, fc.getSelectedFile());
                 JOptionPane.showMessageDialog(this, "Matrículas exportadas a Excel exitosamente.");
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }

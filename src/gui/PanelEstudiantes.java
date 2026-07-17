@@ -9,7 +9,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 
 public class PanelEstudiantes extends JPanel {
 
@@ -220,13 +219,13 @@ public class PanelEstudiantes extends JPanel {
 
     private void exportarExcel() {
         JFileChooser fc = new JFileChooser();
-        fc.setSelectedFile(new File("estudiantes.xls"));
+        fc.setSelectedFile(new File("estudiantes.xlsx"));
         if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File archivo = fc.getSelectedFile();
             try {
                 ExportadorExcel.exportarEstudiantes(arbol, archivo);
                 JOptionPane.showMessageDialog(this, "Estudiantes exportados a Excel exitosamente.");
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
