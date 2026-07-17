@@ -1,22 +1,16 @@
 package gui;
 
-import com.google.common.base.Strings;
-import modelo.Solicitud;
-
 import javax.swing.*;
 import java.awt.*;
-import java.util.Queue;
 
 public class PanelSolicitudesEstudiante extends JPanel {
 
     private JTextField txtCarnet;
     private JComboBox<String> comboTipo;
     private JTextArea txtDescripcion;
-    private Queue<Solicitud> colaSolicitudes;
+    private JButton btnEnviar;
 
-    public PanelSolicitudesEstudiante(Queue<Solicitud> colaSolicitudes) {
-        this.colaSolicitudes = colaSolicitudes;
-
+    public PanelSolicitudesEstudiante() {
         setLayout(new BorderLayout(20, 20));
         setBackground(UIConstants.PANEL_BG);
         setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
@@ -53,11 +47,11 @@ public class PanelSolicitudesEstudiante extends JPanel {
 
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelBoton.setBackground(UIConstants.PANEL_BG);
-        JButton btnEnviar = UIConstants.crearBoton("Enviar Solicitud");
+        btnEnviar = UIConstants.crearBoton("Enviar Solicitud");
         btnEnviar.setPreferredSize(new Dimension(180, 40));
         panelBoton.add(btnEnviar);
 
-        // Añadir componentes al panel
+        // Añadir componentes al panel formulario
         panelFormulario.add(lblCarnet);
         panelFormulario.add(txtCarnet);
         panelFormulario.add(Box.createVerticalStrut(10));
@@ -70,33 +64,31 @@ public class PanelSolicitudesEstudiante extends JPanel {
         panelFormulario.add(btnEnviar);
 
         add(panelFormulario, BorderLayout.CENTER);
-
-        // Acción del botón
-        btnEnviar.addActionListener(e -> enviarSolicitud());
     }
 
-    private void enviarSolicitud() {
-        String carnet = txtCarnet.getText().trim();
-        String tipo = (String) comboTipo.getSelectedItem();
-        String descripcion = txtDescripcion.getText().trim();
+    // --- MÉTODOS DE MANIPULACIÓN Y LECTURA DE LA UI ---
 
-        if (Strings.isNullOrEmpty(carnet) || Strings.isNullOrEmpty(descripcion)) {
-            JOptionPane.showMessageDialog(this, "⚠️ Por favor completa todos los campos.");
-            return;
-        }
+    public String getCarnet() {
+        return txtCarnet.getText().trim();
+    }
 
-        Solicitud solicitud = new Solicitud(carnet, tipo, descripcion);
-        colaSolicitudes.offer(solicitud);
+    public String getTipoSolicitud() {
+        return (String) comboTipo.getSelectedItem();
+    }
 
-        JOptionPane.showMessageDialog(this,
-                "✅ Solicitud enviada correctamente.\n\n" +
-                        "📌 Resumen:\n" +
-                        "Carnet: " + carnet + "\n" +
-                        "Tipo: " + tipo + "\n" +
-                        "Fecha: " + solicitud.getFechaFormateada());
+    public String getDescripcion() {
+        return txtDescripcion.getText().trim();
+    }
 
+    public void limpiarFormulario() {
         txtCarnet.setText("");
         txtDescripcion.setText("");
         comboTipo.setSelectedIndex(0);
+    }
+
+    // --- GETTERS DE COMPONENTES PARA EL CONTROLADOR ---
+
+    public JButton getBtnEnviar() {
+        return btnEnviar;
     }
 }
