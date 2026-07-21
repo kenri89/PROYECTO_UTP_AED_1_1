@@ -1,7 +1,5 @@
 package gui;
 
-import Controlador.LoginController;
-import dao.UsuarioDAO;
 import java.awt.Color;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.slf4j.Logger;
@@ -24,7 +22,7 @@ public class Main {
         javax.swing.UIManager.put("Button.select", UIConstants.AZUL_OSCURO);
         java.awt.EventQueue.invokeLater(() -> {
             LOGGER.info("Ventana de login abierta");
-            new LoginController(new LoginFrame(), new UsuarioDAO());
+            new LoginFrame().setVisible(true);
         });
     }
 }

@@ -3,6 +3,8 @@ package gui;
 import estructuras.ArbolEstudiantes;
 import modelo.Estudiante;
 import util.ExportadorExcel;
+import util.ConexionSQL;
+import org.mindrot.jbcrypt.BCrypt;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -41,7 +43,7 @@ public class PanelEstudiantes extends JPanel {
 
         txtCarnet = new JTextField();
         txtNombre = new JTextField();
-        comboCarrera = new JComboBox<>(new String[]{"DESARROLLO DE SISTEMAS", "CONTABILIDAD"});
+        comboCarrera = new JComboBox<>(new String[]{"SECRETARIADO", "AGROPECUARIA", "MECANICA AUTOMOTRIZ", "ENFERMERIA TECNICA", "LABORATORIO CLINICO", "INFORMATICA"});
 
         panelForm.add(new JLabel("Carnet:"));
         panelForm.add(txtCarnet);
@@ -131,6 +133,16 @@ public class PanelEstudiantes extends JPanel {
         boolean exitoSQL = estudianteDAO.insertar(carnet, nombre, carrera);
 
         if (exitoSQL) {
+            String hash = BCrypt.hashpw("1234", BCrypt.gensalt());
+            String sql = "INSERT INTO usuarios (username, password, rol) VALUES (?, ?, 'Estudiante')";
+            try (java.sql.Connection cn = ConexionSQL.getConexion();
+                 java.sql.PreparedStatement ps = cn.prepareStatement(sql)) {
+                ps.setString(1, carnet);
+                ps.setString(2, hash);
+                ps.executeUpdate();
+            } catch (Exception e) {
+                System.err.println("No se creó cuenta de usuario: " + e.getMessage());
+            }
             JOptionPane.showMessageDialog(this, "Estudiante registrado con éxito en la base de datos.");
             cargarDatosDesdeSQL();
         } else {

@@ -1,6 +1,5 @@
 package gui;
 
-import com.google.common.base.Strings;
 import estructuras.ArregloCursos;
 import estructuras.MatrizSemestres;
 import estructuras.ListaCursos;

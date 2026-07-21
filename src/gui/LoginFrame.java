@@ -1,6 +1,7 @@
 package gui;
 
-import com.google.common.base.Strings;
+import dao.UsuarioDAO;
+import modelo.Usuario;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
@@ -76,7 +77,7 @@ public class LoginFrame extends JFrame {
 
         try {
             ImageIcon icon = new ImageIcon(new ImageIcon(getClass().getResource("/gui/logo.png"))
-                    .getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH));
+                    .getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH));
             JLabel lblLogo = new JLabel(icon);
             panelDerecho.add(lblLogo);
         } catch (Exception e) {
@@ -89,8 +90,36 @@ public class LoginFrame extends JFrame {
         panelPrincipal.add(panelIzquierdo);
         panelPrincipal.add(panelDerecho);
         add(panelPrincipal);
-        
+
+        btnLogin.addActionListener(e -> iniciarSesion());
     }
+
+    private void iniciarSesion() {
+        String usuario = getUsuario();
+        String password = getPassword();
+        String rol = getRol();
+
+        if (usuario.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese usuario y contraseña", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            Usuario u = new UsuarioDAO().autenticar(usuario, password, rol);
+            if (u != null) {
+                dispose();
+                new MenuPrincipal(u).setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "Error de inicio de sesión", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al conectar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }
+
     public String getUsuario() {
         return txtUsuario.getText().trim();
     }

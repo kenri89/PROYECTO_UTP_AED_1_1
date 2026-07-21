@@ -21,9 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -51,10 +48,6 @@ public final class PersistenciaAcademica {
 
     private static File directorioFile() {
         return new File(System.getProperty("user.home"), DIR_NAME);
-    }
-
-    private static Path directorio() {
-        return Paths.get(System.getProperty("user.home"), DIR_NAME);
     }
 
     private static String esc(String s) {

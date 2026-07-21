@@ -1,7 +1,6 @@
 package gui;
 
 import modelo.Usuario;
-import modelo.Solicitud;
 import estructuras.ListaCursos;
 import estructuras.ArregloCursos;
 import estructuras.MatrizSemestres;
@@ -13,8 +12,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 
 public class MenuPrincipal extends JFrame {
 
@@ -27,8 +24,6 @@ public class MenuPrincipal extends JFrame {
     private ArbolEstudiantes arbolEstudiantes;
     private ListaMatricula listaMatricula;
     private final PilaAcciones_U3 pilaHistorial = new PilaAcciones_U3();
-
-    private Queue<Solicitud> colaSolicitudes = new LinkedList<>();
 
     public MenuPrincipal(Usuario usuario) {
         this.usuarioActual = usuario;
@@ -59,7 +54,7 @@ public class MenuPrincipal extends JFrame {
         lblBienvenida.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
         add(lblBienvenida, BorderLayout.NORTH);
 
-        JPanel panelBotones = new JPanel(new GridLayout(8, 1, 10, 10));
+        JPanel panelBotones = new JPanel(new GridLayout(9, 1, 10, 10));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
         panelBotones.setBackground(UIConstants.PANEL_HEADER);
 
@@ -68,6 +63,7 @@ public class MenuPrincipal extends JFrame {
         JButton btnMatricula = UIConstants.crearBoton("Matrícula");
         JButton btnHistorial = UIConstants.crearBoton("Historial Académico");
         JButton btnSolicitudes = UIConstants.crearBoton("Solicitudes");
+        JButton btnDashboard = UIConstants.crearBoton("Dashboard");
         JButton btnMisMatriculas = UIConstants.crearBoton("Mis cursos matriculados");
         JButton btnAtenderSolicitudes = UIConstants.crearBoton("Atender Solicitudes (Admin)");
         JButton btnSalir = UIConstants.crearBoton("Salir");
@@ -83,12 +79,13 @@ public class MenuPrincipal extends JFrame {
         btnMatricula.setVisible(esAdmin || esSecretaria || esEstudiante);
         btnHistorial.setVisible(esAdmin || esEstudiante || esDocente);
         btnSolicitudes.setVisible(esAdmin || esEstudiante || esSecretaria);
+        btnDashboard.setVisible(true);
         btnMisMatriculas.setVisible(esEstudiante);
         btnAtenderSolicitudes.setVisible(esAdmin);
 
         JButton[] botones = {
             btnCursos, btnEstudiantes, btnMatricula, btnHistorial,
-            btnSolicitudes, btnMisMatriculas, btnAtenderSolicitudes, btnSalir
+            btnSolicitudes, btnDashboard, btnMisMatriculas, btnAtenderSolicitudes, btnSalir
         };
 
         for (JButton btn : botones) {
@@ -100,7 +97,7 @@ public class MenuPrincipal extends JFrame {
 
         panelContenido = new JPanel(new BorderLayout());
         panelContenido.setBackground(UIConstants.PANEL_BG);
-        panelContenido.add(new JLabel("Bienvenido al sistema académico", JLabel.CENTER), BorderLayout.CENTER);
+        panelContenido.add(new PanelDashboard(usuarioActual, arbolEstudiantes, arregloCursos, listaCursos, listaMatricula, matrizSemestres), BorderLayout.CENTER);
         add(panelContenido, BorderLayout.CENTER);
 
         // Navegación
@@ -120,7 +117,10 @@ public class MenuPrincipal extends JFrame {
 
         btnMatricula.addActionListener(e -> {
             panelContenido.removeAll();
-            String carnetEst = usuarioActual.getRol().trim().equalsIgnoreCase("estudiante") ? usuarioActual.getCarnet() : null;
+            String carnetEst = null;
+            if (usuarioActual.getRol().trim().equalsIgnoreCase("estudiante")) {
+                carnetEst = usuarioActual.getCarnet() != null ? usuarioActual.getCarnet() : usuarioActual.getUsername();
+            }
             panelContenido.add(new PanelMatricula(listaCursos, arbolEstudiantes, listaMatricula, pilaHistorial, carnetEst), BorderLayout.CENTER);
             panelContenido.revalidate();
             panelContenido.repaint();
@@ -134,7 +134,7 @@ public class MenuPrincipal extends JFrame {
             String[] arregloCarnets = carnets.toArray(new String[0]);
 
             // ✅ PanelHistorial espera un arreglo, no una lista
-            PanelHistorial panel = new PanelHistorial(pilaHistorial, arregloCarnets);
+            PanelHistorial panel = new PanelHistorial(arregloCarnets);
             panelContenido.removeAll();
             panelContenido.add(panel, BorderLayout.CENTER);
             panelContenido.revalidate();
@@ -143,14 +143,22 @@ public class MenuPrincipal extends JFrame {
 
         btnSolicitudes.addActionListener(e -> {
             panelContenido.removeAll();
-            panelContenido.add(new PanelSolicitudesEstudiante(colaSolicitudes), BorderLayout.CENTER);
+            panelContenido.add(new PanelSolicitudesEstudiante(), BorderLayout.CENTER);
+            panelContenido.revalidate();
+            panelContenido.repaint();
+        });
+
+        btnDashboard.addActionListener(e -> {
+            panelContenido.removeAll();
+            panelContenido.add(new PanelDashboard(usuarioActual, arbolEstudiantes, arregloCursos, listaCursos, listaMatricula, matrizSemestres), BorderLayout.CENTER);
             panelContenido.revalidate();
             panelContenido.repaint();
         });
 
         btnMisMatriculas.addActionListener(e -> {
             panelContenido.removeAll();
-            panelContenido.add(new PanelMisMatriculas(listaMatricula, usuarioActual.getCarnet(), arbolEstudiantes), BorderLayout.CENTER);
+            String carnet = usuarioActual.getCarnet() != null ? usuarioActual.getCarnet() : usuarioActual.getUsername();
+            panelContenido.add(new PanelMisMatriculas(listaMatricula, carnet, arbolEstudiantes), BorderLayout.CENTER);
             panelContenido.revalidate();
             panelContenido.repaint();
         });
@@ -163,7 +171,7 @@ public class MenuPrincipal extends JFrame {
             }
 
             panelContenido.removeAll();
-            panelContenido.add(new PanelAdministradorSolicitudes(colaSolicitudes), BorderLayout.CENTER);
+            panelContenido.add(new PanelAdministradorSolicitudes(), BorderLayout.CENTER);
             panelContenido.revalidate();
             panelContenido.repaint();
         });
